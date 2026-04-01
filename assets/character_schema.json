@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Character Library Schema",
+  "required": ["char_id", "name", "visual_traits", "initial_state"],
+  "properties": {
+    "char_id": {"type": "string", "format": "uuid", "description": "全局唯一角色ID"},
+    "name": {"type": "string", "description": "角色名称"},
+    "alias": {"type": "array", "items": {"type": "string"}, "description": "角色别名"},
+    "visual_traits": {
+      "type": "object",
+      "required": ["gender", "age_range", "hairstyle", "clothing_style", "distinctive_features"],
+      "properties": {
+        "gender": {"type": "string", "enum": ["male", "female", "neutral"]},
+        "age_range": {"type": "string", "example": "18-25"},
+        "hairstyle": {"type": "string"},
+        "clothing_style": {"type": "string"},
+        "distinctive_features": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "initial_state": {
+      "type": "object",
+      "description": "角色初始状态（健康值、黑化程度、所持道具等）",
+      "additionalProperties": true
+    }
+  }
+}

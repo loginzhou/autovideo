@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Episode Storyboard Schema",
+  "required": ["episode_id", "seq", "state_delta", "storyboard"],
+  "properties": {
+    "episode_id": {"type": "string", "format": "uuid", "description": "单集唯一ID"},
+    "seq": {"type": "integer", "minimum": 1, "description": "单集序号"},
+    "state_delta": {
+      "type": "object",
+      "description": "本集结束后全局状态变更",
+      "additionalProperties": true
+    },
+    "storyboard": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["shot_id", "shot_type", "composition", "subject", "duration_s", "visual_prompt"],
+        "properties": {
+          "shot_id": {"type": "string", "description": "镜头ID，格式：ep{seq}_shot{num}"},
+          "shot_type": {"type": "string", "enum": ["extreme_close_up", "close_up", "medium_shot", "push_in", "static"]},
+          "composition": {"type": "string", "const": "centered", "description": "强制居中构图"},
+          "subject": {"type": "string", "description": "镜头主体"},
+          "dialogue": {"type": "string", "description": "角色台词"},
+          "duration_s": {"type": "integer", "minimum": 2, "maximum": 8, "description": "镜头时长（秒）"},
+          "visual_prompt": {"type": "string", "description": "AI生成图片/视频提示词"},
+          "audio_prompt": {"type": "string", "description": "AI配音/音效提示词"},
+          "generation_mode": {"type": "string", "enum": ["image_to_video", "text_to_video", "text_to_image"], "description": "生图生视频模式"},
+          "reference_assets": {
+            "type": "object",
+            "properties": {
+              "image_ref": {"type": "string", "description": "绑定的参考图路径（FaceID/LoRA/设计图）"},
+              "voice_ref": {"type": "string", "description": "绑定的配音Voice ID"}
+            },
+            "description": "强制绑定的资产ID"
+          },
+          "first_frame_override": {"type": "boolean", "description": "是否需要先生成静态图作为视频首帧约束"},
+          "transition_to_next": {"type": "string", "enum": ["Cut", "Fade_to_black", "Glitch_effect", "Wipe", "Cross_fade"], "description": "到下一个镜头的转场方式"},
+          "bgm_cue": {"type": "string", "description": "BGM情绪落点指示"},
+          "safety_check_focus": {"type": "string", "description": "极易崩坏的视觉元素校验点"}
+        }
+      }
+    }
+  }
+}

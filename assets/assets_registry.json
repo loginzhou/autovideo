@@ -1,0 +1,45 @@
+{
+  "visual_assets": {
+    "characters": {
+      "char_a7d2f9c1": {
+        "name": "林越",
+        "face_id_ref": "./assets/characters/lin_yue_faceid.png",
+        "lora_ref": "./assets/characters/lin_yue_lora.safetensors"
+      },
+      "char_b3e8d5a2": {
+        "name": "苏幼微",
+        "face_id_ref": "./assets/characters/su_youwei_faceid.png",
+        "lora_ref": "./assets/characters/su_youwei_lora.safetensors"
+      },
+      "char_c9f1b6e3": {
+        "name": "虎哥",
+        "face_id_ref": "./assets/characters/huge_faceid.png",
+        "lora_ref": "./assets/characters/huge_lora.safetensors"
+      }
+    },
+    "train": {
+      "level_1": {
+        "name": "初代列车",
+        "design_ref": "./assets/train/train_level1_front.png",
+        "lora_ref": "./assets/train/train_level1_lora.safetensors"
+      },
+      "level_2": {
+        "name": "装甲升级列车",
+        "design_ref": "./assets/train/train_level2_front.png",
+        "lora_ref": "./assets/train/train_level2_lora.safetensors"
+      }
+    }
+  },
+  "audio_assets": {
+    "voices": {
+      "char_a7d2f9c1": "voice_id_001_cold_male",
+      "char_b3e8d5a2": "voice_id_002_soft_female",
+      "char_c9f1b6e3": "voice_id_003_rough_male"
+    },
+    "bgm": {
+      "tense": "./assets/bgm/tense_horror.mp3",
+      "action": "./assets/bgm/heavy_bass_action.mp3",
+      "cool": "./assets/bgm/cold_ambient.mp3"
+    }
+  }
+}

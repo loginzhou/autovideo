@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novel2Shorts WebUI v1.0</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+    <style>
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .log-box { height: 400px; overflow-y: auto; background: #f5f5f5; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .section { margin-bottom: 20px; padding: 20px; border: 1px solid #eee; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <div class="header">
+            <h1>🎬 Novel2Shorts WebUI v1.0</h1>
+            <p>工业级竖屏短剧全链路自动化生成系统</p>
+        </div>
+
+        <div class="section">
+            <h3>📤 上传小说</h3>
+            <el-upload
+                action="/api/upload_novel"
+                :show-file-list="false"
+                accept=".txt"
+                :on-success="handleUploadSuccess"
+                :before-upload="beforeUpload"
+            >
+                <el-button type="primary">点击上传小说（TXT格式，UTF-8编码）</el-button>
+            </el-upload>
+        </div>
+
+        <div class="section">
+            <h3>⚙️ 基础配置</h3>
+            <el-form label-width="120px">
+                <el-form-item label="生成集数">
+                    <el-input-number v-model="config.basic.test_mode_episodes" :min="1" :max="100"></el-input-number>
+                    <span style="margin-left: 10px;">（测试模式，设置为null生成全部）</span>
+                </el-form-item>
+                <el-form-item label="LLM提供商">
+                    <el-select v-model="config.llm.default_provider">
+                        <el-option label="OpenAI" value="openai"></el-option>
+                        <el-option label="Anthropic" value="anthropic"></el-option>
+                        <el-option label="豆包" value="volcengine"></el-option>
+                        <el-option label="智谱" value="zhipu"></el-option>
+                        <el-option label="通义千问" value="qwen"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="API密钥">
+                    <el-input v-model="config.llm.providers[config.llm.default_provider].api_key" type="password" show-password></el-input>
+                </el-form-item>
+                <el-form-item label="模型名称">
+                    <el-input v-model="config.llm.providers[config.llm.default_provider].model"></el-input>
+                </el-form-item>
+                <el-form-item label="ComfyUI地址">
+                    <el-input v-model="config.comfyui.server_url"></el-input>
+                </el-form-item>
+                <el-form-item label="开启渲染">
+                    <el-switch v-model="config.basic.render_enabled"></el-switch>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="success" @click="saveConfig">保存配置</el-button>
+                </el-form-item>
+            </el-form>
+        </div>
+
+        <div class="section">
+            <h3>🚀 任务控制</h3>
+            <el-button type="primary" size="large" :loading="running" @click="startTask" :disabled="running">
+                {{ running ? '生成中...' : '一键启动生成' }}
+            </el-button>
+            <el-button type="warning" size="large" @click="downloadOutput" style="margin-left: 10px;">下载全部输出</el-button>
+        </div>
+
+        <div class="section">
+            <h3>📋 实时日志</h3>
+            <div class="log-box" ref="logBox">
+                <div v-for="(log, idx) in logs" :key="idx">{{ log }}</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        const { ElMessage } = ElementPlus;
+        createApp({
+            data() {
+                return {
+                    config: {},
+                    logs: [],
+                    running: false,
+                    pollTimer: null
+                }
+            },
+            async mounted() {
+                await this.loadConfig();
+                this.pollLogs();
+            },
+            beforeUnmount() {
+                if (this.pollTimer) clearInterval(this.pollTimer);
+            },
+            methods: {
+                async loadConfig() {
+                    const res = await axios.get('/api/get_config');
+                    this.config = res.data;
+                },
+                async saveConfig() {
+                    await axios.post('/api/save_config', this.config);
+                    ElMessage.success('配置保存成功！');
+                },
+                beforeUpload(file) {
+                    const isTxt = file.type === 'text/plain' || file.name.endsWith('.txt');
+                    if (!isTxt) {
+                        ElMessage.error('只能上传TXT格式的小说文件！');
+                        return false;
+                    }
+                    return true;
+                },
+                handleUploadSuccess(response, file) {
+                    ElMessage.success('小说上传成功！可以开始生成了');
+                },
+                async startTask() {
+                    await axios.post('/api/start_task');
+                    this.running = true;
+                    this.logs = [];
+                    ElMessage.success('任务启动成功！查看日志获取进度');
+                },
+                async pollLogs() {
+                    this.pollTimer = setInterval(async () => {
+                        const res = await axios.get('/api/get_logs');
+                        this.logs = res.data.logs;
+                        this.running = res.data.running;
+                        // 滚动到底部
+                        this.$nextTick(() => {
+                            const logBox = this.$refs.logBox;
+                            if (logBox) logBox.scrollTop = logBox.scrollHeight;
+                        });
+                    }, 1000);
+                },
+                async downloadOutput() {
+                    window.open('/api/download_output');
+                }
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>

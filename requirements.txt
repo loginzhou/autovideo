@@ -1,0 +1,15 @@
+# 核心依赖
+pyyaml>=6.0
+tqdm>=4.65.0
+requests>=2.31.0
+openai>=1.0.0
+
+# 字幕翻译依赖
+googletrans==4.0.0-rc1
+
+# 音频处理依赖（可选，使用音频标准化功能需要）
+ffmpeg-python>=0.2.0
+
+# 其他可选依赖
+numpy>=1.24.0
+pandas>=2.0.0

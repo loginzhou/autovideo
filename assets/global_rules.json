@@ -1,0 +1,22 @@
+{
+  "Rule_1_Visual_Consistency": {
+    "enabled": true,
+    "description": "视觉一致性绝对法则：角色特征必须完全继承world_lore.json定义，严禁修改外貌/服饰/伤疤位置",
+    "enforcement_level": "blocking"
+  },
+  "Rule_2_Vertical_Format_Strict": {
+    "enabled": true,
+    "description": "9:16竖屏物理法则：所有提示词必须包含vertical composition，主体居中，严禁宽横向运镜",
+    "enforcement_level": "blocking"
+  },
+  "Rule_3_Atomic_Idempotency": {
+    "enabled": true,
+    "description": "原子幂等性法则：渲染前校验文件存在且非空直接跳过，严禁重复消耗算力",
+    "enforcement_level": "blocking"
+  },
+  "Rule_4_Retention_First": {
+    "enabled": true,
+    "description": "完播率优先法则：每集前两个镜头必须为高动态/强情绪冲突画面，严禁空镜头开场",
+    "enforcement_level": "blocking"
+  }
+}

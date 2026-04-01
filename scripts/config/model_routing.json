@@ -1,0 +1,17 @@
+{
+  "model_tiers": {
+    "lightweight": "volcengine/doubao-seed-2-0-lite-260215",
+    "medium": "volcengine/doubao-seed-2-0-standard-260215",
+    "reasoning": "volcengine/doubao-seed-2-0-pro-260215"
+  },
+  "agent_routing": {
+    "NovelSplitter": "lightweight",
+    "OutlineExtractor": "lightweight",
+    "BlueprintGenerator": "reasoning",
+    "EpisodeSandbox": "reasoning",
+    "PromptGenerator": "medium",
+    "JSONValidator": "lightweight",
+    "StateKeeper": "lightweight",
+    "ContinuityChecker": "medium"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "aspect_ratio": "9:16",
+  "resolution": [1080, 1920],
+  "composition_rules": {
+    "priority": ["centered_subject", "close_up", "extreme_close_up"],
+    "forbidden_shots": ["wide_panorama", "group_panorama", "full_scene_landscape", "train_side_full_view"],
+    "allowed_movements": ["push_in", "slow_zoom_in", "static"],
+    "ui_safe_area": {"top": 120, "bottom": 200, "left": 40, "right": 40}
+  },
+  "train_shooting_rules": {
+    "allowed_shots": ["train_front_low_angle_shot", "train_spiked_deflector_close_up", "train_wheel_crushing_zombie_close_up", "train_interior_depth_perspective"],
+    "forbidden_shots": ["train_side_full_view", "train_top_panorama"],
+    "description": "列车是横向物体，严禁9:16竖屏拍侧面全景，必须用极低仰拍车头、尖刺排障器特写、车轮碾压特写、内部纵深镜头"
+  },
+  "per_shot_duration": {"min": 2, "max": 8, "average": 4}
+}

@@ -1,0 +1,104 @@
+# Novel2Shorts 开源版配置文件
+# 复制此文件为 config.yaml，填写你的配置后即可使用
+
+# ============== 基础配置 ==============
+basic:
+  # 输入小说路径
+  input_novel_path: "input/novel.txt"
+  # 输出根目录
+  output_root: "output/"
+  # 是否开启渲染功能（需要启动ComfyUI）
+  render_enabled: false
+  # 测试模式：只生成前N集，设置为null生成全部
+  test_mode_episodes: 3
+  # 生成语言：zh(中文)/en(英文)等
+  generation_language: "zh"
+
+# ============== LLM模型配置 ==============
+llm:
+  # 默认使用的模型提供商：openai/anthropic/volcengine(豆包)/zhipu(智谱)/qwen(通义千问)
+  default_provider: "volcengine"
+  # 各提供商API配置
+  providers:
+    openai:
+      api_key: "your-openai-api-key"
+      base_url: "https://api.openai.com/v1"
+      model: "gpt-4o"
+      temperature: 0.7
+      max_tokens: 4096
+    anthropic:
+      api_key: "your-anthropic-api-key"
+      base_url: "https://api.anthropic.com"
+      model: "claude-3-opus-20240229"
+      temperature: 0.7
+      max_tokens: 4096
+    volcengine:
+      api_key: "your-doubao-api-key"
+      base_url: "https://ark.cn-beijing.volces.com/api/v3"
+      model: "doubao-seed-2-0-pro-260215"
+      temperature: 0.7
+      max_tokens: 4096
+    zhipu:
+      api_key: "your-zhipu-api-key"
+      base_url: "https://open.bigmodel.cn/api/paas/v4"
+      model: "glm-4"
+      temperature: 0.7
+      max_tokens: 4096
+    qwen:
+      api_key: "your-qwen-api-key"
+      base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+      model: "qwen-max"
+      temperature: 0.7
+      max_tokens: 4096
+
+# ============== ComfyUI渲染配置 ==============
+comfyui:
+  # ComfyUI服务地址
+  server_url: "http://127.0.0.1:8188"
+  # 渲染用模型 checkpoint 名称
+  checkpoint_name: "Juggernaut_RunDiffusionPhoto2_Lightning_4Steps.safetensors"
+  # 渲染输出分辨率（9:16竖屏）
+  resolution:
+    width: 720
+    height: 1280
+  # 渲染参数
+  render_params:
+    steps: 5
+    cfg: 1.5
+    sampler_name: "euler"
+    scheduler: "normal"
+    denoise: 1.0
+  # ComfyUI本地输出目录（用于自动回收渲染资产）
+  local_output_dir: "D:\\AI_Render\\ComfyUI_windows_portable_nvidia\\ComfyUI_windows_portable\\ComfyUI\\output"
+
+# ============== 多语言字幕配置 ==============
+subtitle:
+  # 支持的输出语言列表
+  target_languages: ["zh", "en", "es", "ko", "ja"]
+  # 翻译引擎：google/deeplx
+  translate_engine: "google"
+  # DeepLX API地址（使用deeplx时需要配置）
+  deeplx_api_url: "http://127.0.0.1:1188/translate"
+
+# ============== 音频配置 ==============
+audio:
+  # 目标响度（LUFS），符合短视频平台标准
+  target_loudness: -16.0
+  # 峰值限制（dBTP）
+  true_peak_limit: -1.0
+  # 压缩比
+  compression_ratio: 4.0
+  # TTS服务配置
+  tts:
+    provider: "elevenlabs"
+    elevenlabs_api_key: "your-elevenlabs-api-key"
+    default_voice_id: "21m00Tcm4TlvDq8ikWAM"
+
+# ============== 合规检测配置 ==============
+compliance:
+  # 自定义敏感词列表
+  custom_sensitive_words: []
+  # 开启自动替换敏感词
+  auto_replace_sensitive_words: false
+  # 敏感词替换字符
+  replace_char: "*"
