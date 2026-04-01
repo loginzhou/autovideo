@@ -116,6 +116,32 @@ class ConfigCenter:
                 "tts_model": "speech_tts", # TTS模型
                 "default_voice": "female_young" # 默认配音音色
             },
+            # 多语言出海配置
+            "multi_language": {
+                "enable_translation": True, # 是否开启多语言翻译
+                "target_languages": ["en", "es"], # 目标翻译语言，支持en/es/fr/de/pt/ru/ar/ja/ko/vi/th/id
+                "cache_enabled": True, # 是否开启翻译缓存
+                "model": "deepseek-ai/DeepSeek-V3.2" # 翻译用模型
+            },
+            # 批量调度配置
+            "batch_scheduler": {
+                "max_concurrent_tasks": 1, # 最大并行任务数，单GPU建议1，多GPU可以调整
+            },
+            # 自动质量审核配置
+            "quality_audit": {
+                "enable_audit": True, # 是否开启自动质量审核
+                "audit_stages": ["screenplay", "storyboard"], # 需要审核的环节
+                "min_score": 8, # 最低通过分数
+                "max_retries": 2, # 审核不通过最大重试次数
+                "model": "deepseek-ai/DeepSeek-V3.2", # 审核用模型
+                "platform_rules": [
+                    "禁止色情、暴力、血腥、低俗内容",
+                    "禁止违反当地法律法规内容",
+                    "禁止政治敏感内容",
+                    "禁止歧视性内容",
+                    "内容积极向上，符合短视频平台社区规范"
+                ]
+            },
             # 功能开关
             "features": {
                 "token_saving": True, # 是否开启token优化节省
