@@ -2,6 +2,7 @@ import os
 import json
 import time
 import requests
+from .token_manager import count_tokens, optimize_context
 
 # 配置读取（注释掉避免.env覆盖正确的API密钥）
 # from dotenv import load_dotenv
@@ -28,6 +29,9 @@ def get_llm_response(prompt, model="deepseek-ai/DeepSeek-V3.2", temperature=0.7,
     # 强制校验API密钥
     if not DOUBAO_API_KEY:
         raise Exception("❌ 未配置API密钥，禁止使用模拟数据，请在.env中配置正确的硅基流动API Key")
+    
+    # 优化上下文，减少token消耗
+    prompt = optimize_context(prompt)
     
     # token计数，自动截断超长内容
     input_tokens = estimate_tokens(prompt)
@@ -81,11 +85,16 @@ def get_llm_response(prompt, model="deepseek-ai/DeepSeek-V3.2", temperature=0.7,
                                         full_response += delta['content']
                             except:
                                 continue
+                output_tokens = estimate_tokens(full_response)
+                count_tokens(module_name="llm_call", prompt_tokens=input_tokens, completion_tokens=output_tokens, model=model)
                 return full_response.strip()
             else:
                 # 普通返回
                 result = response.json()
-                return result['choices'][0]['message']['content'].strip()
+                output_content = result['choices'][0]['message']['content'].strip()
+                output_tokens = estimate_tokens(output_content)
+                count_tokens(module_name="llm_call", prompt_tokens=input_tokens, completion_tokens=output_tokens, model=model)
+                return output_content
             
         except Exception as e:
             if attempt < retry_count - 1:
