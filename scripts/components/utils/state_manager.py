@@ -46,7 +46,7 @@ class PipelineStateManager:
         if data is not None:
             self.state[f"{stage_name}_data"] = data
         self._save_state()
-        print(f"✅ 阶段[{stage_name}]已标记完成，已保存断点状态")
+        print(f"阶段[{stage_name}]已标记完成，已保存断点状态")
     
     def get_stage_data(self, stage_name: str) -> Optional[Any]:
         """获取阶段保存的产出数据"""
@@ -68,7 +68,7 @@ class PipelineStateManager:
         if data is not None:
             self.state["episodes"][episode_key][f"{stage_name}_data"] = data
         self._save_state()
-        print(f"✅ 第{episode_seq}集[{stage_name}]阶段已标记完成，已保存断点状态")
+        print(f"第{episode_seq}集[{stage_name}]阶段已标记完成，已保存断点状态")
     
     def get_episode_stage_data(self, episode_seq: int, stage_name: str) -> Optional[Any]:
         """获取单集阶段保存的产出数据"""
@@ -83,13 +83,13 @@ class PipelineStateManager:
         if episode_key in self.state["episodes"]:
             del self.state["episodes"][episode_key]
             self._save_state()
-            print(f"🔄 第{episode_seq}集状态已重置，将重新生成")
+            print(f"第{episode_seq}集状态已重置，将重新生成")
     
     def reset_all(self):
         """重置所有状态，重新跑全流程"""
         self.state = self._init_state()
         self._save_state()
-        print("🔄 所有状态已重置，将重新执行全流程")
+        print("所有状态已重置，将重新执行全流程")
     
     def _save_state(self):
         """保存状态到文件"""

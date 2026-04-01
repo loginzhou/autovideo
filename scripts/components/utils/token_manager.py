@@ -42,8 +42,8 @@ def count_tokens(module_name: str, prompt_tokens: int, completion_tokens: int, m
     global_token_usage["per_module"][module_name]["cost"] += cost
     
     # 打印消耗
-    print(f"💸 模块[{module_name}]消耗：prompt={prompt_tokens}，completion={completion_tokens}，本环节成本：¥{cost:.4f}")
-    print(f"📊 累计总消耗：prompt={global_token_usage['total_prompt_tokens']}，completion={global_token_usage['total_completion_tokens']}，总成本：¥{global_token_usage['total_cost']:.4f}")
+    print(f"模块[{module_name}]消耗：prompt={prompt_tokens}，completion={completion_tokens}，本环节成本：¥{cost:.4f}")
+    print(f"累计总消耗：prompt={global_token_usage['total_prompt_tokens']}，completion={global_token_usage['total_completion_tokens']}，总成本：¥{global_token_usage['total_cost']:.4f}")
 
 def optimize_context(context: Any, max_length: int = 8000) -> Any:
     """优化上下文，截断冗余内容，减少token消耗"""
@@ -71,4 +71,4 @@ def save_token_usage(output_path: str = "output/analysis/token_usage.json"):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(global_token_usage, f, ensure_ascii=False, indent=2)
-    print(f"✅ Token消耗统计已保存到：{output_path}，总成本：¥{global_token_usage['total_cost']:.4f}")
+    print(f"Token消耗统计已保存到：{output_path}，总成本：¥{global_token_usage['total_cost']:.4f}")

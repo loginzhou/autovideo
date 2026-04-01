@@ -51,10 +51,10 @@ class HumanReviewManager:
         # 生成易读的预览文件
         self._generate_preview(preview_file, title, content)
         
-        print(f"\n⚠️  【人工审核节点】{title} 等待审核")
-        print(f"📝 预览文件：{preview_file}")
-        print(f"✏️  审核文件：{review_file}")
-        print("👉 操作说明：")
+        print(f"\n【人工审核节点】{title} 等待审核")
+        print(f"预览文件：{preview_file}")
+        print(f"审核文件：{review_file}")
+        print("操作说明：")
         print("   1. 查看预览文件确认内容是否符合要求")
         print("   2. 如需修改，直接编辑审核文件中的content字段，或者填写review_comments驳回重生成")
         print("   3. 将status字段改为approved表示通过，改为rejected表示驳回重生成")
@@ -67,14 +67,14 @@ class HumanReviewManager:
                     review_data = json.load(f)
                 status = review_data.get("status", "pending")
                 if status == "approved":
-                    print(f"✅ {title} 审核通过")
+                    print(f"{title} 审核通过")
                     return True
                 elif status == "rejected":
                     comments = review_data.get("review_comments", "无审核意见")
-                    print(f"❌ {title} 审核驳回，意见：{comments}")
+                    print(f"{title} 审核驳回，意见：{comments}")
                     return False
             except Exception as e:
-                print(f"⚠️  读取审核文件失败：{str(e)}，重试中...")
+                print(f"读取审核文件失败：{str(e)}，重试中...")
             import time
             time.sleep(5)
     

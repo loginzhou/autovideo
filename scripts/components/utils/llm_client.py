@@ -20,11 +20,11 @@ def estimate_tokens(text):
 def get_llm_response(prompt, model="deepseek-ai/DeepSeek-V3.2", temperature=0.7, max_tokens=8192, max_context_tokens=150000, stream=False):
     """
     DeepSeek V3.2 专用LLM调用客户端 V3.0 优化版
-    ✅ 支持流式输出，彻底解决超时问题
-    ✅ 固定前缀优先命中缓存，降本提效
-    ✅ 禁止fallback模拟数据，API调用失败直接抛出异常终止
-    ✅ 自动token计数，确保输入不会超过160K上下文限制（预留10K输出空间，最大输入150K token）
-    ✅ 自动重试最多3次
+    支持流式输出，彻底解决超时问题
+    固定前缀优先命中缓存，降本提效
+    禁止fallback模拟数据，API调用失败直接抛出异常终止
+    自动token计数，确保输入不会超过160K上下文限制（预留10K输出空间，最大输入150K token）
+    自动重试最多3次
     """
     # 强制校验API密钥
     if not DOUBAO_API_KEY:

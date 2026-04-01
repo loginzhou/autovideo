@@ -49,12 +49,12 @@ class ImageGenerator:
                     if not backend["api_key"]:
                         continue
                 self.active_backend = backend
-                print(f"✅ 选择生图后端：{backend['name']}")
+                print(f"选择生图后端：{backend['name']}")
                 return
             except Exception as e:
-                print(f"ℹ️  生图后端{backend['name']}不可用：{str(e)}")
+                print(f"生图后端{backend['name']}不可用：{str(e)}")
                 continue
-        raise Exception("❌ 所有生图后端都不可用，请检查配置")
+        raise Exception("所有生图后端都不可用，请检查配置")
     
     def generate(self, prompt: str, negative_prompt: str = "", width: int = 720, height: int = 1280, **kwargs) -> str:
         """生成图片，自动重试和降级"""
@@ -68,16 +68,16 @@ class ImageGenerator:
                 elif self.active_backend["type"] == "api":
                     return self._generate_api(prompt, negative_prompt, width, height, **kwargs)
             except Exception as e:
-                print(f"⚠️  生图失败（第{retry+1}次重试）：{str(e)}")
+                print(f"生图失败（第{retry+1}次重试）：{str(e)}")
                 time.sleep(2)
                 if retry == self.active_backend["retry"] - 1:
                     # 降级到下一个后端
-                    print(f"🔄 后端{self.active_backend['name']}多次失败，尝试降级")
+                    print(f"后端{self.active_backend['name']}多次失败，尝试降级")
                     current_index = next(i for i, b in enumerate(IMAGE_BACKENDS) if b["name"] == self.active_backend["name"])
                     if current_index < len(IMAGE_BACKENDS) - 1:
                         self.active_backend = IMAGE_BACKENDS[current_index + 1]
                         return self.generate(prompt, negative_prompt, width, height, **kwargs)
-                    raise Exception(f"❌ 所有后端都失败，生图失败：{str(e)}")
+                    raise Exception(f"所有后端都失败，生图失败：{str(e)}")
     
     def _generate_comfyui(self, prompt: str, negative_prompt: str, width: int, height: int, **kwargs) -> str:
         """调用本地ComfyUI生成图片"""
