@@ -69,6 +69,27 @@ class ConfigCenter:
                 "model": "deepseek-ai/DeepSeek-V3.2", # 分析用模型
                 "temperature": 0.1, # 分析温度，越低越稳定
             },
+            # 角色一致性管理配置
+            "character_manager": {
+                "custom_character_path": "config/custom_characters.json", # 自定义人设文件路径
+                "enable_validation": True, # 是否开启角色一致性自动校验修正
+            },
+            # 智能分集配置
+            "episode_splitter": {
+                "cache_enabled": True, # 是否开启缓存，同一本小说不用重新分集
+                "max_episodes": 100, # 最多生成分集数量
+                "min_quality_score": 8, # 最低质量评分，低于此分数自动重写
+                "max_retries": 2, # 生成分集失败最大重试次数
+                "model": "deepseek-ai/DeepSeek-V3.2", # 分集用模型
+                "temperature": 0.3, # 分集温度，越低越稳定
+                "rules": {
+                    "opening_hook": "前3秒必须出现钩子（冲突/悬念/反常点）",
+                    "first_15s": "第15秒必须出现第一个爽点/冲突爆发",
+                    "mid_point": "中间必须有1次剧情反转",
+                    "ending": "结尾必须留强悬念，引导用户看下一集",
+                    "episode_length": "每集对应剧情内容长度控制在1000-1500字，对应正片时长60-90秒"
+                }
+            },
             # 功能开关
             "features": {
                 "token_saving": True, # 是否开启token优化节省
