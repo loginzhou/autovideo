@@ -54,6 +54,21 @@ class ConfigCenter:
                     "final_video": False, # 成品视频审核
                 }
             },
+            # 小说切块配置
+            "novel_chunker": {
+                "chunk_size_kb": 25, # 单块大小，单位KB
+                "overlap_ratio": 0.05, # 块重叠比例
+                "deduplicate": True, # 是否去重相邻重复块
+            },
+            # 语义分析配置
+            "semantic_analysis": {
+                "cache_enabled": True, # 是否开启缓存，同一本小说不用重复分析
+                "chunk_size_char": 20000, # 单分析块字符数（1万汉字约2万字符）
+                "overlap_ratio": 0.05, # 块重叠比例
+                "max_retries": 2, # 分析失败最大重试次数
+                "model": "deepseek-ai/DeepSeek-V3.2", # 分析用模型
+                "temperature": 0.1, # 分析温度，越低越稳定
+            },
             # 功能开关
             "features": {
                 "token_saving": True, # 是否开启token优化节省
