@@ -90,6 +90,14 @@ class ConfigCenter:
                     "episode_length": "每集对应剧情内容长度控制在1000-1500字，对应正片时长60-90秒"
                 }
             },
+            # 剧本生成配置
+            "screenwriter": {
+                "cache_enabled": True, # 是否开启缓存
+                "enable_ai_generation": True, # 是否开启AI生成剧本，关闭则使用规则生成
+                "enable_review": True, # 是否开启人工审核
+                "model": "deepseek-ai/DeepSeek-V3.2", # 剧本生成用模型
+                "temperature": 0.7, # 剧本生成温度
+            },
             # 功能开关
             "features": {
                 "token_saving": True, # 是否开启token优化节省
