@@ -44,3 +44,11 @@ node_modules/
 # 日志
 *.log
 logs/
+
+# 图片资源
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+
