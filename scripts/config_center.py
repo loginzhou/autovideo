@@ -106,6 +106,16 @@ class ConfigCenter:
                 "model": "deepseek-ai/DeepSeek-V3.2", # 分镜生成用模型
                 "temperature": 0.4, # 分镜生成温度，越低越稳定
             },
+            # 音频设计配置
+            "foley": {
+                "cache_enabled": True, # 是否开启缓存
+                "enable_review": False, # 是否开启人工审核，默认关闭
+                "enable_tts": False, # 是否开启自动配音生成
+                "tts_api_key": "", # TTS服务API密钥
+                "tts_endpoint": "https://api.siliconflow.cn/v1/audio/speech", # TTS接口地址
+                "tts_model": "speech_tts", # TTS模型
+                "default_voice": "female_young" # 默认配音音色
+            },
             # 功能开关
             "features": {
                 "token_saving": True, # 是否开启token优化节省
