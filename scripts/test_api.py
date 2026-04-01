@@ -1,6 +1,7 @@
 import requests
+import os
 
-API_KEY = "sk-ixueonzuiewvpkoljozywyqrvivxnigrkkavbulsaaixnuub"
+API_KEY = os.getenv("DOUBAO_API_KEY", "your_api_key_here")
 ENDPOINT = "https://api.siliconflow.cn/v1/chat/completions"
 
 headers = {

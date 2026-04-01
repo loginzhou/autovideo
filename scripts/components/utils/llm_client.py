@@ -7,7 +7,7 @@ import requests
 # from dotenv import load_dotenv
 # load_dotenv()
 
-DOUBAO_API_KEY = os.getenv("DOUBAO_API_KEY", "sk-ixueonzuiewvpkoljozywyqrvivxnigrkkavbulsaaixnuub")
+DOUBAO_API_KEY = os.getenv("DOUBAO_API_KEY", "")
 DOUBAO_ENDPOINT = "https://api.siliconflow.cn/v1/chat/completions"
 
 def estimate_tokens(text):
