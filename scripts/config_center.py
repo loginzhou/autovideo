@@ -98,6 +98,14 @@ class ConfigCenter:
                 "model": "deepseek-ai/DeepSeek-V3.2", # 剧本生成用模型
                 "temperature": 0.7, # 剧本生成温度
             },
+            # 分镜生成配置
+            "director": {
+                "cache_enabled": True, # 是否开启缓存
+                "enable_ai_generation": False, # 是否开启AI生成分镜，默认关闭使用专业规则生成
+                "enable_review": True, # 是否开启人工审核
+                "model": "deepseek-ai/DeepSeek-V3.2", # 分镜生成用模型
+                "temperature": 0.4, # 分镜生成温度，越低越稳定
+            },
             # 功能开关
             "features": {
                 "token_saving": True, # 是否开启token优化节省
