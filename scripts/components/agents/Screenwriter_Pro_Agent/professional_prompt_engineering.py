@@ -441,7 +441,7 @@ class ProfessionalPromptBuilder:
         
         arc = self.character_arcs[arc_type]
         guidance = f"""【角色弧线指导 - {arc['name']}】
-{arc['description'}
+{arc['description']}
 
 本集在弧线中的位置建议:
 """
@@ -732,7 +732,7 @@ if __name__ == "__main__":
     print(f"\n📝 生成的Prompt元数据:")
     print(f"  结构: {meta['structure_used']}")
     print(f"  弧线: {meta['arc_type']}")
-    print(f"  风格: {meta['tone_style']")
+    print(f"  风格: {meta['tone_style']}")
     print(f"  长度: {len(prompt)} 字符")
     print(f"  引用理论: {len(meta['theories_referenced'])} 种")
     

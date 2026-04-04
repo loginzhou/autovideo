@@ -160,7 +160,7 @@ EMOTIONAL_MUSIC_MAPPING = {
     
     "fear": {
         "music_style": "tense minimalist horror score",
-        "tempo_range": [variable, "rubato with accelerations"],
+        "tempo_range": ["variable", "rubato with accelerations"],
         "key_preference": ["chromatic", "whole tone", "diminished"],
         "instrumentation": [
             "sul ponticello strings (scratchy bowing)",
@@ -198,7 +198,7 @@ EMOTIONAL_MUSIC_MAPPING = {
     
     "despair": {
         "music_style": "empty void ambient drone",
-        "tempo_range": [static or extremely slow],
+        "tempo_range": ["static or extremely slow"],
         "key_preference": ["drone on single note", "gradual pitch descent"],
         "instrumentation": [
             "sustained synthesizer pads",
@@ -218,7 +218,7 @@ EMOTIONAL_MUSIC_MAPPING = {
     # 复杂情绪
     "suspense": {
         "music_style": "building tension ostinato",
-        "tempo_range": [accelerating from 80 to 120],
+        "tempo_range": ["accelerating from 80 to 120"],
         "key_preference": ["minor keys with raised 4ths (lydian)"],
         "instrumentation": [
             "pulsing synthesizer ostinato",
@@ -237,7 +237,7 @@ EMOTIONAL_MUSIC_MAPPING = {
     
     "mystery": {
         "music_style": "enigmatic impressionistic",
-        "tempo_range": [70, 90, flexible rubato],
+        "tempo_range": [70, 90, "flexible rubato"],
         "key_preference": ["modal (dorian, phrygian, mixolydian)"],
         "instrumentation": [
             "celesta or glockenspiel",
@@ -491,8 +491,8 @@ def adjust_audio_intensity(design, intensity):
 def get_mix_parameters(intensity):
     """获取最终混音参数"""
     base_params = {
-        "loudness_target": -23 LUFS (streaming standard),
-        "true_peak_max": -1.0 dBTP,
+        "loudness_target": "-23 LUFS (streaming standard)",
+        "true_peak_max": "-1.0 dBTP",
         "stereo_width": "natural",
         "low_frequency_extension": "full spectrum"
     }

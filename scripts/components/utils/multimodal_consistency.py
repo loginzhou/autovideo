@@ -79,7 +79,7 @@ MODALITY_MAPPING_RULES = {
         
         "dialogue_processing_by_emotion": {
             "whisper_intimacy": {"presence": "+4dB", "compression": "light", "proximity_effect": "emphasized", "breath audible": True},
-            "shout_anger": {"presence": "+6dB", "compression": "heavy", "distortion_slight": "acceptable", "room_reflections": "audible},
+            "shout_anger": {"presence": "+6dB", "compression": "heavy", "distortion_slight": "acceptable", "room_reflections": "audible"},
             "fear_trembling": {"presence": "+2dB", "compression": "moderate", "pitch_variation": "increased", "breathing": "rapid and audible"}
         }
     },
