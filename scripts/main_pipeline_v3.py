@@ -27,12 +27,14 @@ from components.upgrade.character_consistency_manager.runner import CharacterCon
 from components.upgrade.scene_consistency_manager.runner import SceneConsistencyManager
 
 # 从配置中心读取参数
-OUTPUT_ROOT = config.get("base.output_root", "output/")
-RENDER_ENABLED = config.get("base.render_enabled", False)
+OUTPUT_ROOT = config.get("basic.output_root", "output/")
+if not os.path.isabs(OUTPUT_ROOT):
+    OUTPUT_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), OUTPUT_ROOT)
+RENDER_ENABLED = config.get("basic.render_enabled", False)
 # 使用绝对路径，确保文件路径正确
 INPUT_NOVEL = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
                            config.get("base.input_novel_path", "input/novel.txt"))
-MAX_EPISODES = config.get("base.max_episodes", 3)
+MAX_EPISODES = config.get("basic.test_mode_episodes", 3)
 
 @error_handler
 def main():

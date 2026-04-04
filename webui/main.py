@@ -28,11 +28,15 @@ BASE_DIR = project_root
 
 # 动态加载配置
 def get_output_dir():
+    """获取输出目录（绝对路径）"""
     try:
         from scripts.config_loader import config
-        return config.get('basic', {}).get('output_root', 'output/')
+        output_dir = config.get('basic', {}).get('output_root', 'output/')
+        if not os.path.isabs(output_dir):
+            output_dir = os.path.join(BASE_DIR, output_dir)
+        return output_dir
     except:
-        return 'output/'
+        return os.path.join(BASE_DIR, 'output')
 
 output_dir = get_output_dir()
 
@@ -851,65 +855,54 @@ async def start_full_workflow(request: Request):
         # 在后台线程中运行主流程
         import threading
         def run_pipeline():
-            global task_running, workflow_state
+            global task_running, workflow_state, task_logs
             try:
-                print("[WebUI] 开始运行主流程...")
+                print("[WebUI] 开始运行真实主流程...")
                 
-                # 更新步骤：语义分析
-                workflow_state["current_step"] = 2
-                workflow_state["overall_progress"]["status"] = "语义分析中"
-                add_detailed_progress(workflow_state, "语义分析", 0, "进行中")
+                # ====== 阶段0: 初始化与校验 ======
+                workflow_state["current_step"] = 1
+                workflow_state["overall_progress"]["status"] = "初始化中"
+                add_detailed_progress(workflow_state, "初始化", 5, "检查环境")
                 
-                # 这里应该调用实际的主流程
-                # from scripts.main_pipeline_v3 import main as run_main_pipeline
-                # run_main_pipeline()
+                # 确保输出目录存在
+                os.makedirs(os.path.join(BASE_DIR, "output"), exist_ok=True)
+                os.makedirs(os.path.join(BASE_DIR, "input"), exist_ok=True)
                 
-                # 模拟进度更新（实际使用时替换为真实逻辑）
-                total_episodes = workflow_state["overall_progress"]["total"]
-                for i in range(1, min(total_episodes + 1, 6)):  # 模拟前5集
-                    if not task_running:
-                        break
-                    
-                    workflow_state["current_step"] = 3  # 分集生成
-                    workflow_state["detailed_progress"] = []
-                    
-                    for step_name in ["分集生成", "剧本创作", "台词生成", "分镜设计", "音频设计", "渲染打包"]:
-                        if not task_running:
-                            break
-                        
-                        add_detailed_progress(
-                            workflow_state, 
-                            f"第{i}集 - {step_name}", 
-                            50 * (i / total_episodes),
-                            "进行中"
-                        )
-                        
-                        workflow_state["overall_progress"]["current"] = i
-                        workflow_state["overall_progress"]["status"] = f"正在处理第{i}集"
-                        
-                        # 计算预计时间
-                        elapsed = time.time() - workflow_state["start_time"]
-                        if i > 0:
-                            avg_time_per_episode = elapsed / i
-                            remaining = (total_episodes - i) * avg_time_per_episode
-                            workflow_state["estimated_time"] = remaining
-                        
-                        time.sleep(2)  # 模拟处理时间
+                # 检查小说文件是否存在
+                novel_path = os.path.join(BASE_DIR, "input", "novel.txt")
+                if not os.path.exists(novel_path):
+                    raise Exception(f"小说文件不存在: {novel_path}")
                 
-                # 完成
+                add_detailed_progress(workflow_state, "初始化", 100, "就绪")
+                task_logs.append(f"[{time.strftime('%H:%M:%S')}] 环境检查通过，开始执行主流程")
+                
+                # ====== 调用真实的 main_pipeline_v3.main() ======
+                import sys
+                sys.path.insert(0, os.path.join(BASE_DIR, "scripts"))
+                from main_pipeline_v3 import main as run_real_pipeline
+                
+                # 执行真实pipeline（它会处理所有阶段）
+                run_real_pipeline()
+                
+                # ====== 完成 ======
                 workflow_state["completed"] = True
                 workflow_state["running"] = False
                 workflow_state["overall_progress"]["status"] = "已完成"
-                workflow_state["current_step"] = 8  # 所有步骤完成
+                workflow_state["overall_progress"]["current"] = workflow_state["overall_progress"]["total"]
+                workflow_state["current_step"] = 8
                 task_running = False
-                
+                task_logs.append(f"[{time.strftime('%H:%M:%S')}] ✅ 主流程执行完成！")
                 print("[WebUI] 主流程执行完成")
                 
             except Exception as e:
-                print(f"[WebUI] 主流程执行失败: {str(e)}")
+                import traceback
+                error_detail = traceback.format_exc()
+                print(f"[WebUI] 主流程执行失败: {str(e)}\n{error_detail}")
                 workflow_state["running"] = False
-                workflow_state["overall_progress"]["status"] = "失败"
+                workflow_state["overall_progress"]["status"] = f"失败: {str(e)}"
                 task_running = False
+                task_logs.append(f"[{time.strftime('%H:%M:%S')}] ❌ 主流程执行失败: {str(e)}")
+                task_logs.append(error_detail)
         
         thread = threading.Thread(target=run_pipeline)
         thread.daemon = True
