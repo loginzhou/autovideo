@@ -959,98 +959,45 @@ async def get_detailed_progress():
 
 @app.get("/api/smart_recommend")
 async def smart_recommend():
-    """智能配置推荐 - 根据小说内容和模板推荐最佳配置"""
+    """智能配置推荐 V2 - 两阶段推荐系统"""
     try:
-        # 检查是否有上传的小说
+        from components.utils.smart_recommender import quick_recommend, precise_recommend
+        
         novel_path = os.path.join(BASE_DIR, "input", "novel.txt")
         
-        recommendations = {}
+        if not os.path.exists(novel_path):
+            return {"status": "error", "message": "请先上传小说文件"}
         
-        if os.path.exists(novel_path):
-            # 读取小说内容进行分析
-            with open(novel_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            # 简单的文本分析（实际项目中可以使用更复杂的NLP）
-            content_length = len(content)
-            
-            # 根据内容长度推荐集数
-            if content_length < 50000:
-                episodes = 10
-                reason = "小说较短，建议生成10集短剧"
-            elif content_length < 100000:
-                episodes = 30
-                reason = "中等长度，建议生成30集"
-            elif content_length < 200000:
-                episodes = 60
-                reason = "较长小说，建议生成60集"
-            else:
-                episodes = 98
-                reason = "长篇小说，建议生成98集完整系列"
-            
-            recommendations["episodes"] = {
-                "name": "推荐集数",
-                "value": f"{episodes}集",
-                "reason": reason
-            }
-            
-            # 检测关键词推荐风格
-            keywords = {
-                "古风": ["武功", "江湖", "侠客", "剑", "内功", "修仙"],
-                "现代": ["公司", "总裁", "职场", "都市", "手机", "电脑"],
-                "科幻": ["飞船", "机器人", "AI", "未来", "太空", "科技"],
-                "言情": ["喜欢", "爱", "心动", "表白", "约会", "浪漫"],
-                "悬疑": ["谋杀", "侦探", "线索", "真相", "谜团", "秘密"]
-            }
-            
-            best_style = None
-            max_count = 0
-            
-            for style, words in keywords.items():
-                count = sum(1 for word in words if word in content)
-                if count > max_count:
-                    max_count = count
-                    best_style = style
-            
-            if best_style:
-                style_map = {
-                    "古风": "ancient",
-                    "现代": "modern", 
-                    "科幻": "scifi",
-                    "言情": "romance",
-                    "悬疑": "suspense"
-                }
-                
-                recommendations["style"] = {
-                    "name": "推荐风格模板",
-                    "value": f"{best_style}风格",
-                    "reason": f"检测到{max_count}个相关关键词"
-                }
-                
-                recommendations["template"] = {
-                    "name": "推荐使用模板",
-                    "value": style_map.get(best_style, "modern"),
-                    "reason": "根据小说内容自动匹配最佳模板"
-                }
-            
-            # 推荐模型配置
-            recommendations["model"] = {
-                "name": "推荐LLM模型",
-                "value": "SiliconFlow (DeepSeek-V3.2)",
-                "reason": "性价比高，中文理解能力强"
-            }
-            
-            # 推荐渲染设置
-            recommendations["render"] = {
-                "name": "渲染模式",
-                "value": "ComfyUI (本地渲染)",
-                "reason": "本地渲染更稳定，无网络依赖"
-            }
+        # 读取平台和策略配置
+        from scripts.config_loader import config
+        platform = config.get("basic.target_platform", "tiktok")
+        strategy = config.get("basic.content_strategy", "romance_domination_strategy")
         
-        return {
-            "status": "success",
-            "recommendations": recommendations
-        }
+        # ====== Phase 1: 快速预估（基于文本特征）======
+        result = quick_recommend(novel_path, platform=platform, strategy=strategy)
+        
+        # ====== Phase 2: 如果语义分析已完成，叠加精准推荐 ======
+        from scripts.components.utils.state_manager import pipeline_state
+        analysis_data = None
+        
+        if pipeline_state.is_stage_completed("semantic_analysis"):
+            full_analysis = pipeline_state.get_stage_data("semantic_analysis")
+            
+            episode_blueprints = None
+            if pipeline_state.is_stage_completed("episode_splitter"):
+                episode_blueprints = pipeline_state.get_stage_data("episode_splitter")
+            
+            precise_result = precise_recommend(
+                full_analysis_result=full_analysis,
+                episode_blueprints=episode_blueprints,
+                platform=platform,
+                strategy=strategy
+            )
+            
+            if precise_result.get("status") == "success":
+                result["phase2"] = precise_result["recommendations"]
+        
+        return result
     
     except Exception as e:
         error_msg = f"智能推荐失败: {str(e)}"

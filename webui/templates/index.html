@@ -2328,22 +2328,145 @@
                         });
                 },
                 
-                showRecommendations(recommendations) {
-                    let message = '🤖 智能配置推荐：<br><br>';
+                showRecommendations(data) {
+                    const rec = data.recommendations || data;
+                    let message = '';
                     
-                    for (const key in recommendations) {
-                        const rec = recommendations[key];
-                        message += `• <strong>${rec.name}</strong>: ${rec.value}<br>`;
-                        message += `  <span style="color: #666; font-size: 12px;">${rec.reason}</span><br><br>`;
+                    if (rec.phase === 2 || rec.phase2) {
+                        message = this._buildPhase2RecommendationHTML(rec);
+                    } else {
+                        message = this._buildPhase1RecommendationHTML(rec);
                     }
                     
                     ElMessage({
                         dangerouslyUseHTMLString: true,
                         message: message,
-                        type: 'info',
-                        duration: 5000,
-                        showClose: true
+                        type: rec.phase === 2 ? 'success' : 'info',
+                        duration: 8000,
+                        showClose: true,
+                        customClass: 'smart-recommend-popup'
                     });
+                },
+                
+                _buildPhase1RecommendationHTML(rec) {
+                    const ep = rec.episodes || {};
+                    const genre = rec.genre || {};
+                    const style = rec.style_recommendation || {};
+                    const platform = rec.platform_optimization || {};
+                    const stats = rec.text_stats || {};
+                    
+                    let html = '<div style="max-width:480px; text-align:left; line-height:1.8;">';
+                    
+                    html += `<div style="font-size:15px;font-weight:bold;color:#409eff;margin-bottom:10px;">
+                        🤖 智能推荐 <span style="font-size:11px;color:#909399;font-weight:normal;">(快速预估 · Phase 1)</span>
+                    </div>`;
+                    
+                    if (ep.recommended) {
+                        html += `<div style="background:#f0f7ff;padding:8px 12px;border-radius:6px;margin-bottom:8px;border-left:3px solid #409eff;">
+                            <strong>📊 推荐集数</strong>: <span style="color:#e6a23c;font-size:16px;font-weight:bold;">${ep.recommended}集</span>
+                            ${ep.range ? `<span style="color:#909399;font-size:12px;"> (范围: ${ep.range})</span>` : ''}
+                            <br><span style="color:#666;font-size:11px;">${ep.reason || ''}</span>`;
+                        
+                        if (ep.factors && ep.factors.length > 0) {
+                            html += '<div style="margin-top:4px;font-size:11px;color:#888;">调整因素:';
+                            ep.factors.slice(0, 4).forEach(f => { html += `<br>  • ${f}`; });
+                            html += '</div>';
+                        }
+                        html += '</div>';
+                    }
+                    
+                    if (genre.primary) {
+                        html += `<div style="margin-bottom:6px;"><strong>🎭 题材检测</strong>: ${genre.primary}`;
+                        if (genre.all_detected && genre.all_detected.length > 1) {
+                            html += `<span style="color:#909399;font-size:11px;"> (还有: ${genre.all_detected.slice(1).map(g=>g[0]).join('、')})</span>`;
+                        }
+                        html += ` <el-tag size="small" type="${genre.confidence==='高'?'success':'info'}">${genre.confidence}置信度</el-tag></div>`;
+                    }
+                    
+                    if (style.suggested_template) {
+                        html += `<div style="margin-bottom:6px;"><strong>🎨 推荐模板</strong>: ${style.suggested_template}`;
+                        if (style.suggested_director_style) html += ` | 导演风格: ${style.suggested_director_style}`;
+                        html += '</div>';
+                    }
+                    
+                    if (platform.target_platform && stats.detected_chapters !== undefined) {
+                        html += `<div style="background:#fef0f0;padding:6px 10px;border-radius:4px;margin-top:8px;font-size:12px;">
+                            <strong>📱 平台优化</strong>: ${platform.target_platform.toUpperCase()} 
+                            | ${platform.suggested_episode_duration || ''}<br>
+                            <span style="color:#666;">${platform.pacing_note || ''}</span>
+                        </div>`;
+                    }
+                    
+                    html += `<div style="margin-top:8px;font-size:11px;color:#c0c4cc;text-align:right;">
+                        💡 完成语义分析后将给出更精准的 Phase 2 推荐
+                    </div></div>`;
+                    
+                    return html;
+                },
+                
+                _buildPhase2RecommendationHTML(rec) {
+                    const p1 = rec.episodes || {};
+                    const p2 = rec.phase2 || {};
+                    const chars = p2.characters_analysis || {};
+                    const strategy = p2.strategy_advice || {};
+                    const platform = p2.platform_optimization || {};
+                    const quality = p2.quality_predictions || {};
+                    
+                    let html = '<div style="max-width:520px;text-align:left;line-height:1.7;">';
+                    
+                    html += `<div style="font-size:15px;font-weight:bold;color:#67c23a;margin-bottom:10px;">
+                        🤖 智能推荐 <span style="font-size:11px;color:#67c23a;font-weight:normal;">(精准分析 · Phase 2)</span>
+                    </div>`;
+                    
+                    html += `<div style="background:#f0f9eb;padding:10px 12px;border-radius:6px;margin-bottom:8px;border-left:3px solid #67c23a;">
+                        <strong>📊 最终推荐集数</strong>: <span style="color:#67c23c;font-size:18px;font-weight:bold;">${p2.episodes?.platform_adjusted || p1.recommended || '?'}</span>集
+                        <br><span style="color:#666;font-size:11px;">${p2.episodes?.adjustment_reason || p1.reason || ''}</span>
+                        <br><span style="color:#909399;font-size:10px;">语义分析原推荐: ${p2.episodes?.semantic_analyzer_original || '?'}集 
+                        | 实际分集结果: ${p2.episodes?.actual_split_result || '?'}集</span>
+                    </div>`;
+                    
+                    if (chars.total_characters !== undefined) {
+                        html += `<div style="margin-bottom:6px;">
+                            <strong>👥 角色系统</strong>: 共${chars.total_characters}个角色 
+                            (主角${chars.main_characters || 0}/ 配角${chars.supporting_characters || 0})
+                            <span style="color:#909399;">| 复杂度: ${chars.complexity_level || '-'}</span>
+                        </div>`;
+                    }
+                    
+                    if (strategy.beat_structure) {
+                        html += `<div style="background:#fdf6ec;padding:8px 10px;border-radius:5px;margin-bottom:6px;font-size:12px;">
+                            <strong>📝 策略节奏</strong>: ${strategy.beat_structure}<br>
+                            <strong>Hook设计</strong>: ${strategy.hook_design || '-'}<br>
+                            <strong>高潮频率</strong>: ${strategy.climax_frequency || '-'}
+                        </div>`;
+                    }
+                    
+                    if (platform.pacing_strategy) {
+                        html += `<div style="margin-bottom:6px;">
+                            <strong>🌍 平台适配</strong>: ${platform.target_platform?.toUpperCase() || '-'} 
+                            | 单集时长: ${platform.optimal_episode_duration || '-'} 
+                            | 节奏: <el-tag size="mini" type="warning">${this._formatPacing(platform.pacing_strategy)}</el-tag>
+                        </div>`;
+                    }
+                    
+                    if (quality.storyboard_quality_potential) {
+                        const q = typeof quality.storyboard_quality_potential === 'string' 
+                            ? quality.storyboard_quality_potential 
+                            : quality.storyboard_quality_potential[0];
+                        html += `<div style="margin-top:8px;padding:6px;background:#f5f7fa;border-radius:4px;font-size:12px;">
+                            <strong>📈 质量预测</strong>: 分镜潜力 <strong>${q}</strong>
+                            | ${typeof quality.engagement_prediction === 'string' ? quality.engagement_prediction : quality.engagement_prediction[0]}
+                            | ${typeof quality.viral_potential === 'string' ? quality.viral_potential : quality.viral_potential[0]}
+                        </div>`;
+                    }
+                    
+                    html += '</div>';
+                    return html;
+                },
+                
+                _formatPacing(strategy) {
+                    const map = {'fast_burn': '快燃', 'slow_burn_with_peaks': '慢热+爆发', 'tension_build': '张力递进', 'cinematic': '电影级', 'balanced': '平衡'};
+                    return map[strategy] || strategy;
                 },
             }
         }).use(ElementPlus).mount('#app');
