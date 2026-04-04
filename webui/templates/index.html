@@ -9,10 +9,180 @@
     <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
     <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
     <style>
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .log-box { height: 400px; overflow-y: auto; background: #f5f5f5; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .section { margin-bottom: 20px; padding: 20px; border: 1px solid #eee; border-radius: 8px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+        }
+        
+        .log-box { 
+            height: 400px; 
+            overflow-y: auto; 
+            background: #f5f5f5; 
+            padding: 15px; 
+            border-radius: 8px; 
+            font-family: monospace; 
+            font-size: 13px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header { 
+            text-align: center; 
+            margin-bottom: 40px;
+            padding: 30px 0;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .section { 
+            margin-bottom: 25px; 
+            padding: 25px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+        
+        .section h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .prompt-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+        
+        .prompt-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+        
+        .el-button {
+            transition: all 0.3s ease;
+        }
+        
+        .el-button:hover {
+            transform: translateY(-1px);
+        }
+        
+        .el-table {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .el-tabs__content {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .el-collapse-item__header {
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .audit-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .audit-item h5 {
+            margin-bottom: 5px;
+            color: #28a745;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .el-form-item {
+                margin-bottom: 15px;
+            }
+            
+            .el-button {
+                margin-bottom: 10px;
+            }
+        }
+
+        /* 模板卡片样式 */
+        .template-card {
+            background: white;
+        }
+
+        .template-card:hover {
+            border-color: #667eea !important;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .template-card.active {
+            border-color: #667eea !important;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecff 100%);
+        }
     </style>
 </head>
 <body>
@@ -36,45 +206,670 @@
         </div>
 
         <div class="section">
+            <h3>⚙️ API配置（小说/剧本/分集生成）</h3>
+            <el-form label-width="120px">
+                <el-form-item label="默认提供商">
+                    <el-select v-model="apiConfig.llm.default_provider" style="width: 200px;">
+                        <el-option label="OpenAI" value="openai"></el-option>
+                        <el-option label="Anthropic" value="anthropic"></el-option>
+                        <el-option label="豆包" value="volcengine"></el-option>
+                        <el-option label="智谱" value="zhipu"></el-option>
+                        <el-option label="通义千问" value="qwen"></el-option>
+                        <el-option label="SiliconFlow" value="siliconflow"></el-option>
+                    </el-select>
+                </el-form-item>
+                
+                <el-divider content-position="left">SiliconFlow配置</el-divider>
+                <el-form-item label="API密钥">
+                    <el-input v-model="apiConfig.llm.siliconflow.api_key" type="password" show-password placeholder="sk-..."></el-input>
+                </el-form-item>
+                <el-form-item label="BASE URL">
+                    <el-input v-model="apiConfig.llm.siliconflow.base_url" placeholder="https://api.siliconflow.cn/v1"></el-input>
+                </el-form-item>
+                <el-form-item label="模型名称">
+                    <el-input v-model="apiConfig.llm.siliconflow.model" placeholder="deepseek-ai/DeepSeek-V3.2"></el-input>
+                </el-form-item>
+                
+                <el-divider content-position="left">OpenAI配置</el-divider>
+                <el-form-item label="API密钥">
+                    <el-input v-model="apiConfig.llm.openai.api_key" type="password" show-password placeholder="sk-..."></el-input>
+                </el-form-item>
+                <el-form-item label="BASE URL">
+                    <el-input v-model="apiConfig.llm.openai.base_url" placeholder="https://api.openai.com/v1"></el-input>
+                </el-form-item>
+                <el-form-item label="模型名称">
+                    <el-input v-model="apiConfig.llm.openai.model" placeholder="gpt-4o"></el-input>
+                </el-form-item>
+                
+                <el-divider content-position="left">Anthropic配置</el-divider>
+                <el-form-item label="API密钥">
+                    <el-input v-model="apiConfig.llm.anthropic.api_key" type="password" show-password placeholder="sk-ant-..."></el-input>
+                </el-form-item>
+                <el-form-item label="BASE URL">
+                    <el-input v-model="apiConfig.llm.anthropic.base_url" placeholder="https://api.anthropic.com/v1"></el-input>
+                </el-form-item>
+                <el-form-item label="模型名称">
+                    <el-input v-model="apiConfig.llm.anthropic.model" placeholder="claude-3-opus-20240229"></el-input>
+                </el-form-item>
+                
+                <el-form-item>
+                    <el-button type="primary" :loading="loading.apiTest" @click="testApiConnection">测试API连接</el-button>
+                    <el-tag v-if="apiConnectionStatus" :type="apiConnectionStatus === 'success' ? 'success' : 'danger'" style="margin-left: 10px;">
+                        {{ apiConnectionStatus === 'success' ? '连接成功' : '连接失败' }}
+                    </el-tag>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="success" @click="saveApiConfig">保存API配置</el-button>
+                </el-form-item>
+            </el-form>
+        </div>
+
+        <div class="section">
+            <h3>� 任务类型特定配置</h3>
+            <el-form label-width="150px">
+                <el-form-item label="一键应用到所有任务">
+                    <el-select v-model="apiConfig.llm.default_provider" style="width: 150px;">
+                        <el-option label="OpenAI" value="openai"></el-option>
+                        <el-option label="Anthropic" value="anthropic"></el-option>
+                        <el-option label="豆包" value="volcengine"></el-option>
+                        <el-option label="智谱" value="zhipu"></el-option>
+                        <el-option label="通义千问" value="qwen"></el-option>
+                        <el-option label="SiliconFlow" value="siliconflow"></el-option>
+                    </el-select>
+                    <el-button type="primary" @click="applyToAllTasks(apiConfig.llm.default_provider, apiConfig.llm[apiConfig.llm.default_provider].model)">应用到所有任务</el-button>
+                </el-form-item>
+                
+                <el-divider content-position="left">小说语义分析</el-divider>
+                <el-form-item label="提供商">
+                    <el-select v-model="taskConfigs.semantic_analysis.provider" style="width: 150px;">
+                        <el-option label="OpenAI" value="openai"></el-option>
+                        <el-option label="Anthropic" value="anthropic"></el-option>
+                        <el-option label="豆包" value="volcengine"></el-option>
+                        <el-option label="智谱" value="zhipu"></el-option>
+                        <el-option label="通义千问" value="qwen"></el-option>
+                        <el-option label="SiliconFlow" value="siliconflow"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="模型">
+                    <el-input v-model="taskConfigs.semantic_analysis.model" placeholder="deepseek-ai/DeepSeek-V3.2"></el-input>
+                </el-form-item>
+                
+                <el-divider content-position="left">智能分集</el-divider>
+                <el-form-item label="提供商">
+                    <el-select v-model="taskConfigs.episode_splitting.provider" style="width: 150px;">
+                        <el-option label="OpenAI" value="openai"></el-option>
+                        <el-option label="Anthropic" value="anthropic"></el-option>
+                        <el-option label="豆包" value="volcengine"></el-option>
+                        <el-option label="智谱" value="zhipu"></el-option>
+                        <el-option label="通义千问" value="qwen"></el-option>
+                        <el-option label="SiliconFlow" value="siliconflow"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="模型">
+                    <el-input v-model="taskConfigs.episode_splitting.model" placeholder="doubao-seed-2-0-pro-260215"></el-input>
+                </el-form-item>
+                
+                <el-divider content-position="left">剧本生成</el-divider>
+                <el-form-item label="提供商">
+                    <el-select v-model="taskConfigs.screenplay.provider" style="width: 150px;">
+                        <el-option label="OpenAI" value="openai"></el-option>
+                        <el-option label="Anthropic" value="anthropic"></el-option>
+                        <el-option label="豆包" value="volcengine"></el-option>
+                        <el-option label="智谱" value="zhipu"></el-option>
+                        <el-option label="通义千问" value="qwen"></el-option>
+                        <el-option label="SiliconFlow" value="siliconflow"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="模型">
+                    <el-input v-model="taskConfigs.screenplay.model" placeholder="gpt-4o"></el-input>
+                </el-form-item>
+                
+                <el-divider content-position="left">分镜生成</el-divider>
+                <el-form-item label="提供商">
+                    <el-select v-model="taskConfigs.storyboard.provider" style="width: 150px;">
+                        <el-option label="OpenAI" value="openai"></el-option>
+                        <el-option label="Anthropic" value="anthropic"></el-option>
+                        <el-option label="豆包" value="volcengine"></el-option>
+                        <el-option label="智谱" value="zhipu"></el-option>
+                        <el-option label="通义千问" value="qwen"></el-option>
+                        <el-option label="SiliconFlow" value="siliconflow"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="模型">
+                    <el-input v-model="taskConfigs.storyboard.model" placeholder="claude-3-opus-20240229"></el-input>
+                </el-form-item>
+                
+                <el-divider content-position="left">音频设计</el-divider>
+                <el-form-item label="提供商">
+                    <el-select v-model="taskConfigs.audio_design.provider" style="width: 150px;">
+                        <el-option label="OpenAI" value="openai"></el-option>
+                        <el-option label="Anthropic" value="anthropic"></el-option>
+                        <el-option label="豆包" value="volcengine"></el-option>
+                        <el-option label="智谱" value="zhipu"></el-option>
+                        <el-option label="通义千问" value="qwen"></el-option>
+                        <el-option label="SiliconFlow" value="siliconflow"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="模型">
+                    <el-input v-model="taskConfigs.audio_design.model" placeholder="deepseek-ai/DeepSeek-V3.2"></el-input>
+                </el-form-item>
+                
+                <el-divider content-position="left">多语言翻译</el-divider>
+                <el-form-item label="提供商">
+                    <el-select v-model="taskConfigs.multi_language.provider" style="width: 150px;">
+                        <el-option label="OpenAI" value="openai"></el-option>
+                        <el-option label="Anthropic" value="anthropic"></el-option>
+                        <el-option label="豆包" value="volcengine"></el-option>
+                        <el-option label="智谱" value="zhipu"></el-option>
+                        <el-option label="通义千问" value="qwen"></el-option>
+                        <el-option label="SiliconFlow" value="siliconflow"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="模型">
+                    <el-input v-model="taskConfigs.multi_language.model" placeholder="qwen-max"></el-input>
+                </el-form-item>
+                
+                <el-divider content-position="left">质量审核</el-divider>
+                <el-form-item label="提供商">
+                    <el-select v-model="taskConfigs.quality_audit.provider" style="width: 150px;">
+                        <el-option label="OpenAI" value="openai"></el-option>
+                        <el-option label="Anthropic" value="anthropic"></el-option>
+                        <el-option label="豆包" value="volcengine"></el-option>
+                        <el-option label="智谱" value="zhipu"></el-option>
+                        <el-option label="通义千问" value="qwen"></el-option>
+                        <el-option label="SiliconFlow" value="siliconflow"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="模型">
+                    <el-input v-model="taskConfigs.quality_audit.model" placeholder="claude-3-opus-20240229"></el-input>
+                </el-form-item>
+                
+                <el-form-item>
+                    <el-button type="success" @click="saveTaskConfigs">保存任务配置</el-button>
+                </el-form-item>
+            </el-form>
+        </div>
+
+        <div class="section">
+            <h3>�🎨 渲染配置（图像/视频生成）</h3>
+            <el-form label-width="120px">
+                <el-form-item label="开启渲染">
+                    <el-switch v-model="renderConfig.basic.render_enabled"></el-switch>
+                </el-form-item>
+                <el-form-item label="渲染模式">
+                    <el-select v-model="renderConfig.basic.render_mode" style="width: 200px;">
+                        <el-option label="ComfyUI" value="comfyui"></el-option>
+                        <el-option label="其他" value="other"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="输出目录">
+                    <el-input v-model="renderConfig.basic.output_root" placeholder="output/"></el-input>
+                </el-form-item>
+                <el-divider content-position="left">ComfyUI配置</el-divider>
+                <el-form-item label="服务器地址">
+                    <el-input v-model="renderConfig.comfyui.server_url" placeholder="http://127.0.0.1:8188"></el-input>
+                </el-form-item>
+                <el-form-item label="工作流模板">
+                    <el-input v-model="renderConfig.comfyui.workflow_template" placeholder="workflow_api.json"></el-input>
+                </el-form-item>
+                <el-form-item label="超时时间(秒)">
+                    <el-input-number v-model="renderConfig.comfyui.timeout" :min="60" :max="600"></el-input-number>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="success" @click="saveRenderConfig">保存渲染配置</el-button>
+                </el-form-item>
+            </el-form>
+        </div>
+
+        <div class="section">
             <h3>⚙️ 基础配置</h3>
             <el-form label-width="120px">
                 <el-form-item label="生成集数">
                     <el-input-number v-model="config.basic.test_mode_episodes" :min="1" :max="100"></el-input-number>
                     <span style="margin-left: 10px;">（测试模式，设置为null生成全部）</span>
                 </el-form-item>
-                <el-form-item label="LLM提供商">
-                    <el-select v-model="config.llm.default_provider">
-                        <el-option label="OpenAI" value="openai"></el-option>
-                        <el-option label="Anthropic" value="anthropic"></el-option>
-                        <el-option label="豆包" value="volcengine"></el-option>
-                        <el-option label="智谱" value="zhipu"></el-option>
-                        <el-option label="通义千问" value="qwen"></el-option>
+                
+                <el-divider content-position="left">🌍 平台与受众优化 <el-tag type="danger" size="small" effect="dark">NEW</el-tag></el-divider>
+                
+                <el-form-item label="目标发布平台">
+                    <el-select v-model="config.basic.target_platform" style="width: 100%;" placeholder="选择目标平台">
+                        <el-option label="📱 TikTok (15-60s竖屏短剧)" value="tiktok">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>📱 TikTok</span>
+                                <el-tag size="small" type="danger">最推荐</el-tag>
+                            </div>
+                        </el-option>
+                        <el-option label="📘 Facebook/Instagram Reels (30-90s)" value="facebook_reels"></el-option>
+                        <el-option label="🌐 通用模式 (无平台优化)" value="universal"></el-option>
+                    </el-select>
+                    <div style="font-size: 12px; color: #909399; margin-top: 5px;">
+                        <span v-if="config.basic.target_platform === 'tiktok'">✨ 前3秒Hook决定生死，每5-8秒需留存钩子，适配9:16竖屏</span>
+                        <span v-else-if="config.basic.target_platform === 'facebook_reels'">📗 可承载更深的故事叙述，节奏稍缓，支持30-90秒内容</span>
+                        <span v-else>⚙️ 不应用平台特定优化规则</span>
+                    </div>
+                </el-form-item>
+                
+                <el-form-item label="内容策略">
+                    <el-select v-model="config.basic.content_strategy" style="width: 100%;" placeholder="选择内容策略" :disabled="config.basic.target_platform === 'universal'">
+                        <el-option label="💕 浪漫征服 (Romance Domination)" value="romance_domination_strategy">
+                            <div>
+                                <strong>💕 浪漫征服策略</strong>
+                                <div style="font-size: 11px; color: #909399;">甜→虐→治愈情绪过山车 | 病毒潜力: 极高</div>
+                            </div>
+                        </el-option>
+                        <el-option label="💪 逆袭打脸 (Empowerment Payoff)" value="empowerment_revenge_strategy">
+                            <div>
+                                <strong>💪 逆袭打脸策略</strong>
+                                <div style="font-size: 11px; color: #909399;">压抑→爆发→爽感释放 | 分享性: 极高</div>
+                            </div>
+                        </el-option>
+                        <el-option label="🔮 奇幻悬疑 (Mystery Supernatural)" value="mystery_paranormal_strategy">
+                            <div>
+                                <strong>🔮 奇幻悬疑策略</strong>
+                                <div style="font-size: 11px; color: #909399;">超自然+悬念循环 | 追剧率: 极高</div>
+                            </div>
+                        </el-option>
+                    </el-select>
+                    <div style="font-size: 12px; color: #909399; margin-top: 5px;" v-if="config.basic.content_strategy">
+                        <span v-if="config.basic.content_strategy === 'romance_domination_strategy'">🎯 目标情绪: 蝴蝶般的心动、期待、渴望</span>
+                        <span v-else-if="config.basic.content_strategy === 'empowerment_revenge_strategy'">🎯 目标情绪: 满足感、正义伸张、爽快释放</span>
+                        <span v-else-if="config.basic.content_strategy === 'mystery_paranormal_strategy'">🎯 目标情绪: 好奇、上瘾、无法停止追看</span>
+                    </div>
+                </el-form-item>
+                
+                <el-form-item label="目标受众">
+                    <el-select v-model="config.basic.target_audience" style="width: 100%;">
+                        <el-option label="👩 欧美女性 18-35岁 (核心受众)" value="western_female_18_35"></el-option>
+                        <el-option label="👩‍💼 欧美女性 25-45岁 (职场女性)" value="western_female_25_45"></el-option>
+                        <el-option label="🌍 通用受众" value="general"></el-option>
                     </el-select>
                 </el-form-item>
-                <el-form-item label="API密钥">
-                    <el-input v-model="config.llm.providers[config.llm.default_provider].api_key" type="password" show-password></el-input>
-                </el-form-item>
-                <el-form-item label="模型名称">
-                    <el-input v-model="config.llm.providers[config.llm.default_provider].model"></el-input>
-                </el-form-item>
-                <el-form-item label="ComfyUI地址">
-                    <el-input v-model="config.comfyui.server_url"></el-input>
-                </el-form-item>
-                <el-form-item label="开启渲染">
-                    <el-switch v-model="config.basic.render_enabled"></el-switch>
-                </el-form-item>
                 <el-form-item>
-                    <el-button type="success" @click="saveConfig">保存配置</el-button>
+                    <el-button type="success" @click="saveConfig">保存基础配置</el-button>
+                    <el-button type="primary" @click="exportConfig" style="margin-left: 10px;">导出配置</el-button>
+                    <el-upload
+                        action="/api/import_config"
+                        :show-file-list="false"
+                        accept=".yaml,.yml"
+                        :on-success="handleImportSuccess"
+                        :before-upload="beforeImport"
+                        style="display: inline-block; margin-left: 10px;"
+                    >
+                        <el-button type="warning">导入配置</el-button>
+                    </el-upload>
                 </el-form-item>
             </el-form>
         </div>
 
         <div class="section">
             <h3>🚀 任务控制</h3>
-            <el-button type="primary" size="large" :loading="running" @click="startTask" :disabled="running">
-                {{ running ? '生成中...' : '一键启动生成' }}
-            </el-button>
-            <el-button type="warning" size="large" @click="downloadOutput" style="margin-left: 10px;">下载全部输出</el-button>
+            
+            <!-- 一键生成工作流 -->
+            <div style="margin-bottom: 20px;">
+                <el-button type="primary" size="large" :loading="loading.task" @click="startFullWorkflow" :disabled="running || !hasNovelUploaded">
+                    {{ running ? '生成中...' : '🎬 一键生成视频包' }}
+                </el-button>
+                <el-button type="warning" size="large" @click="pauseTask" :disabled="!running" style="margin-left: 10px;">暂停任务</el-button>
+                <el-button type="success" size="large" @click="resumeTask" :disabled="running" style="margin-left: 10px;">继续任务</el-button>
+                <el-button type="danger" size="large" @click="stopTask" :disabled="!running" style="margin-left: 10px;">停止任务</el-button>
+                <el-button type="warning" size="large" @click="downloadOutput" style="margin-left: 10px;">下载全部输出</el-button>
+                <el-button type="info" size="large" @click="loadEpisodes" style="margin-left: 10px;">刷新剧集列表</el-button>
+            </div>
+
+            <!-- 工作流程可视化 -->
+            <div v-if="workflowSteps.length > 0" style="margin-top: 20px;">
+                <h4>工作流程</h4>
+                <el-steps :active="currentWorkflowStep" finish-status="success" align-center>
+                    <el-step v-for="(step, index) in workflowSteps" :key="index" :title="step.title" :description="step.description"></el-step>
+                </el-steps>
+                
+                <!-- 详细进度 -->
+                <div v-if="detailedProgress.length > 0" style="margin-top: 20px;">
+                    <h5>详细进度</h5>
+                    <div v-for="(item, index) in detailedProgress" :key="index" style="margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>{{ item.name }}</span>
+                            <span>{{ item.status }}</span>
+                        </div>
+                        <el-progress 
+                            :percentage="item.percentage" 
+                            :status="item.status === '完成' ? 'success' : item.status === '失败' ? 'exception' : ''"
+                            :stroke-width="8"
+                        ></el-progress>
+                    </div>
+                </div>
+                
+                <!-- 总体进度 -->
+                <div v-if="taskProgress.total > 0" style="margin-top: 20px;">
+                    <h4>总体进度</h4>
+                    <el-progress 
+                        :percentage="Math.round((taskProgress.current / taskProgress.total) * 100)" 
+                        :status="taskProgress.status === '已完成' ? 'success' : taskProgress.status === '已停止' ? 'exception' : ''"
+                        :stroke-width="15"
+                        style="margin-bottom: 10px;"
+                    >
+                        <template #default>
+                            <span>{{ taskProgress.status }} ({{ taskProgress.current }}/{{ taskProgress.total }})</span>
+                        </template>
+                    </el-progress>
+                    <div style="display: flex; justify-content: space-between; font-size: 14px; color: #666;">
+                        <span>当前集数: {{ taskProgress.current }}</span>
+                        <span>总集数: {{ taskProgress.total }}</span>
+                        <span v-if="isPaused" style="color: #e6a23c;">⏸ 已暂停</span>
+                        <span v-else-if="running" style="color: #67c23a;">▶ 运行中</span>
+                        <span v-else style="color: #909399;">⏹ 已停止</span>
+                    </div>
+                    
+                    <!-- 预计时间 -->
+                    <div v-if="estimatedTime > 0" style="margin-top: 10px; font-size: 13px; color: #667eea;">
+                        ⏱ 预计剩余时间: {{ formatTime(estimatedTime) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模板系统 -->
+        <div class="section">
+            <h3>🎨 快速模板</h3>
+            <p style="margin-bottom: 15px; color: #666;">选择预设模板快速配置参数，或保存当前配置为模板</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div v-for="template in templates" :key="template.id" 
+                     @click="applyTemplate(template)"
+                     class="template-card"
+                     :class="{ active: selectedTemplate === template.id }"
+                     style="padding: 15px; border: 2px solid #e4e7ed; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">{{ template.icon }}</div>
+                    <div style="font-weight: 600; margin-bottom: 5px;">{{ template.name }}</div>
+                    <div style="font-size: 12px; color: #999;">{{ template.description }}</div>
+                </div>
+            </div>
+            
+            <el-button type="success" @click="saveAsTemplate">💾 保存为模板</el-button>
+            <el-button type="warning" @click="resetToDefault">🔄 重置默认</el-button>
+        </div>
+
+        <div class="section">
+            <h3>🎬 剧集预览</h3>
+            <el-tabs v-model="activeTab">
+                <el-tab-pane label="剧集列表" name="episodes">
+                    <el-skeleton :loading="loading.episodes" :rows="5" animated v-if="loading.episodes"></el-skeleton>
+                    <el-table v-else :data="episodes" style="width: 100%" v-if="episodes && episodes.length > 0">
+                        <el-table-column prop="id" label="剧集ID"></el-table-column>
+                        <el-table-column prop="seq" label="集数"></el-table-column>
+                        <el-table-column prop="shot_count" label="镜头数"></el-table-column>
+                        <el-table-column label="操作">
+                            <template #default="{row}">
+                                <el-button size="small" @click="viewEpisode(row.id)">查看分镜</el-button>
+                                <el-button size="small" type="primary" @click="previewEpisode(row.id)">预览</el-button>
+                                <el-button size="small" type="info" @click="viewAuditResults(row.id)">审核结果</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <el-empty v-else description="暂无剧集数据，请先生成剧集"></el-empty>
+                </el-tab-pane>
+                <el-tab-pane label="分镜详情" name="storyboard" v-if="currentEpisode">
+                    <h4>第{{ currentStoryboard ? currentStoryboard.episode_seq : '' }}集分镜</h4>
+                    
+                    <!-- 电影级元数据概览 -->
+                    <div v-if="currentStoryboard && currentStoryboard.storyboard && currentStoryboard.storyboard.length > 0" 
+                         style="margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #f5f7fa 0%, #e8ecff 100%); border-radius: 8px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 13px;">
+                            <div>
+                                <span style="color: #666;">🎬 导演风格：</span>
+                                <strong>{{ currentStoryboard.storyboard[0].cinematic_metadata?.director_style || 'N/A' }}</strong>
+                            </div>
+                            <div>
+                                <span style="color: #666;">😊 主导情绪：</span>
+                                <el-tag :type="getEmotionTagType(currentStoryboard.storyboard[0].cinematic_metadata?.primary_emotion)" size="small">
+                                    {{ currentStoryboard.storyboard[0].cinematic_metadata?.primary_emotion || 'neutral' }}
+                                </el-tag>
+                            </div>
+                            <div>
+                                <span style="color: #666;">📍 场景类型：</span>
+                                <strong>{{ currentStoryboard.storyboard[0].cinematic_metadata?.scene_type || 'N/A' }}</strong>
+                            </div>
+                            <div>
+                                <span style="color: #666;">📊 情绪强度：</span>
+                                <el-progress :percentage="(currentStoryboard.storyboard[0].cinematic_metadata?.emotion_intensity || 0) * 100" 
+                                           :stroke-width="6" :show-text="false" style="width: 80px; display: inline-block; vertical-align: middle;"></el-progress>
+                                <span>{{ (currentStoryboard.storyboard[0].cinematic_metadata?.emotion_intensity || 0).toFixed(1) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- V8 平台优化元数据概览 -->
+                    <div v-if="currentStoryboard && currentStoryboard.storyboard && currentStoryboard.storyboard[0]?.platform_optimization" 
+                         style="margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%); border-radius: 8px; border-left: 4px solid #f56c6c;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 13px;">
+                            <div>
+                                <span style="color: #666;">🌍 目标平台：</span>
+                                <el-tag type="danger" size="small">{{ currentStoryboard.storyboard[0].platform_optimization?.target_platform || 'N/A' }}</el-tag>
+                            </div>
+                            <div>
+                                <span style="color: #666;">🎯 Hook强度：</span>
+                                <el-rate :model-value="Math.round((currentStoryboard.storyboard[0].platform_optimization?.hook_strength || 0) / 2)" disabled show-score 
+                                         :score-template="'{value}/5'" style="display: inline-block; vertical-align: middle;"></el-rate>
+                            </div>
+                            <div>
+                                <span style="color: #666;">📤 分享性：</span>
+                                <el-progress :percentage="(currentStoryboard.storyboard[0].platform_optimization?.shareability_factor || 0) * 10" 
+                                           :stroke-width="6" :show-text="false" status="exception" style="width: 80px; display: inline-block; vertical-align: middle;"></el-progress>
+                                <span>{{ currentStoryboard.storyboard[0].platform_optimization?.shareability_factor || 0 }}/10</span>
+                            </div>
+                            <div>
+                                <span style="color: #666;">💬 评论诱导：</span>
+                                <el-tag v-for="(item, idx) in (currentStoryboard.storyboard[0].platform_optimization?.comment_inducers || []).slice(0, 2)" :key="idx" 
+                                         size="small" type="warning" style="margin-right: 4px;">{{ item }}</el-tag>
+                            </div>
+                        </div>
+                    </div>
+
+                    <el-collapse v-model="activeShots" v-if="currentStoryboard && currentStoryboard.storyboard && currentStoryboard.storyboard.length > 0">
+                        <el-collapse-item v-for="(shot, index) in currentStoryboard.storyboard" :key="shot.shot_id || index" :title="`镜头 ${shot.shot_id || index + 1}`">
+                            <div>
+                                <!-- 基础信息 -->
+                                <p><strong>镜头类型：</strong>{{ shot.shot_type || 'N/A' }}</p>
+                                <p><strong>拍摄角度：</strong>{{ shot.camera_angle || 'N/A' }}</p>
+                                <p><strong>灯光方案：</strong>{{ shot.lighting_setup || 'N/A' }}</p>
+                                <p><strong>转场效果：</strong>{{ shot.transition_effect || 'N/A' }}</p>
+                                <p><strong>场景位置：</strong>{{ shot.location || 'N/A' }}</p>
+                                
+                                <!-- V7 新增：电影级元数据 -->
+                                <div v-if="shot.cinematic_metadata" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 12px;">
+                                    <p style="color: #667eea; margin-bottom: 5px;"><strong>🎬 电影级参数</strong></p>
+                                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                                        <span>🎥 镜头配置：{{ shot.cinematic_metadata.lens_config || 'N/A' }}</span>
+                                        <span>🎨 色彩分级：{{ shot.cinematic_metadata.color_grading || 'N/A' }}</span>
+                                        <span>🎞️ 运镜曲线：{{ shot.cinematic_metadata.movement_curve || 'N/A' }}</span>
+                                        <span>📈 情绪向量：V={{ (shot.cinematic_metadata.emotion_vector || {}).valence?.toFixed(2) || '?' }}, A={{ (shot.cinematic_metadata.emotion_vector || {}).arousal?.toFixed(2) || '?' }}</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- V7 新增：叙事上下文 -->
+                                <div v-if="shot.narrative_context" style="margin-top: 8px; padding: 8px; background: #fff3cd; border-radius: 4px; font-size: 11px;">
+                                    <span style="color: #856404;">
+                                        📖 {{ shot.narrative_context.beat_type || 'unknown' }} | 第{{ shot.narrative_context.beat_index || '?' }}/{{ shot.narrative_context.total_beats || '?' }}个节拍
+                                        <el-tag v-if="shot.narrative_context.is_climax_beat" type="danger" size="mini" style="margin-left: 5px;">CLIMAX</el-tag>
+                                    </span>
+                                </div>
+                                
+                                <!-- 台词信息（增强版） -->
+                                <div v-if="shot.dialogue && shot.dialogue.content" style="margin-top: 10px; padding: 10px; background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%); border-radius: 6px; border-left: 3px solid #f56c6c;">
+                                    <p><strong>💬 台词：</strong></p>
+                                    <p style="font-style: italic; margin: 5px 0;">"{{ shot.dialogue.content }}"</p>
+                                    <div style="display: flex; gap: 10px; margin-top: 5px; font-size: 11px;">
+                                        <span>👤 {{ shot.dialogue.speaker }}</span>
+                                        <el-tag :type="getEmotionTagType(shot.dialogue.emotion)" size="mini">{{ shot.dialogue.emotion }}</el-tag>
+                                        <span>⏱ {{ shot.dialogue.duration }}s</span>
+                                    </div>
+                                    <p v-if="shot.dialogue.subtext" style="color: #909399; font-size: 11px; margin-top: 3px;">
+                                        💭 潜台词: {{ shot.dialogue.subtext }}
+                                    </p>
+                                </div>
+                                
+                                <!-- V8 平台优化指标 -->
+                                <div v-if="shot.platform_optimization" style="margin-top: 10px; padding: 10px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 6px; border-left: 3px solid #0ea5e9; font-size: 12px;">
+                                    <p style="color: #0369a1; margin-bottom: 5px;"><strong>🌍 平台优化指标</strong></p>
+                                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
+                                        <span>🎯 Hook强度: <el-tag :type="shot.platform_optimization.hook_strength >= 7 ? 'danger' : 'info'" size="mini">{{ shot.platform_optimization.hook_strength }}/10</el-tag></span>
+                                        <span>📤 分享性: <el-tag :type="shot.platform_optimization.shareability_factor >= 7 ? 'danger' : 'info'" size="mini">{{ shot.platform_optimization.shareability_factor }}/10</el-tag></span>
+                                        <span>📍 留存位置: {{ shot.platform_optimization.beat_position_for_retention }}</span>
+                                        <span v-if="shot.platform_optimization.text_overlay_suggestion">📝 文字建议: <em>{{ shot.platform_optimization.text_overlay_suggestion.substring(0, 30) }}...</em></span>
+                                    </div>
+                                    <div v-if="shot.platform_optimization.comment_inducers && shot.platform_optimization.comment_inducers.length > 0" style="margin-top: 5px;">
+                                        💬 评论诱导: 
+                                        <el-tag v-for="(ci, ciIdx) in shot.platform_optimization.comment_inducers" :key="ciIdx" size="mini" type="warning" style="margin-right: 3px;">{{ ci }}</el-tag>
+                                    </div>
+                                </div>
+                                
+                                <p v-if="shot.visual_prompt"><strong>视觉提示词：</strong><el-tooltip content="点击复制" placement="top"><span @click="copyText(shot.visual_prompt)">{{ shot.visual_prompt.substring(0, 100) }}{{ shot.visual_prompt.length > 100 ? '...' : '' }}</span></el-tooltip></p>
+                                <p v-if="shot.audio_prompt"><strong>音频提示词：</strong>
+                                    <el-tooltip content="点击复制" placement="top"><span @click="copyText(JSON.stringify(shot.audio_prompt, null, 2))">点击查看完整音频配置</span></el-tooltip>
+                                </p>
+                            </div>
+                        </el-collapse-item>
+                    </el-collapse>
+                    <el-empty v-else description="暂无分镜数据"></el-empty>
+                </el-tab-pane>
+                <el-tab-pane label="预览" name="preview" v-if="previewData">
+                    <h4>第{{ previewData && previewData.storyboard ? previewData.storyboard.episode_seq : '' }}集预览</h4>
+                    <el-card>
+                        <template #header>
+                            <div class="card-header">
+                                <span>分镜概览</span>
+                            </div>
+                        </template>
+                        <p>总镜头数：{{ previewData && previewData.storyboard && previewData.storyboard.storyboard ? previewData.storyboard.storyboard.length : 0 }}</p>
+                        <p>集数：{{ previewData && previewData.storyboard ? previewData.storyboard.episode_seq : '' }}</p>
+                    </el-card>
+                    <el-card style="margin-top: 20px;" v-if="previewData.image_prompts && previewData.image_prompts.length > 0">
+                        <template #header>
+                            <div class="card-header">
+                                <span>图像提示词 ({{ previewData.image_prompts.length }}个)</span>
+                            </div>
+                        </template>
+                        <div v-for="(prompt, index) in previewData.image_prompts" :key="index" class="prompt-item">
+                            <el-tooltip content="点击复制" placement="top">
+                                <span @click="copyText(prompt)">{{ prompt }}</span>
+                            </el-tooltip>
+                        </div>
+                    </el-card>
+                    <el-card style="margin-top: 20px;" v-if="previewData.audio_prompts && previewData.audio_prompts.length > 0">
+                        <template #header>
+                            <div class="card-header">
+                                <span>音频提示词 ({{ previewData.audio_prompts.length }}个)</span>
+                            </div>
+                        </template>
+                        <div v-for="(prompt, index) in previewData.audio_prompts" :key="index" class="prompt-item">
+                            <el-tooltip content="点击复制" placement="top">
+                                <span @click="copyText(prompt)">{{ prompt }}</span>
+                            </el-tooltip>
+                        </div>
+                    </el-card>
+                </el-tab-pane>
+                <el-tab-pane label="资产库" name="assets">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h4>资产库管理</h4>
+                        <el-button type="info" @click="loadAssets" :loading="loading.assets">刷新资产库</el-button>
+                    </div>
+                    <el-tabs v-model="activeAssetTab">
+                        <el-tab-pane label="角色" name="characters">
+                            <el-skeleton :loading="loading.assets" :rows="5" animated>
+                                <template #template>
+                                    <el-skeleton-item variant="p" style="width: 30%"></el-skeleton-item>
+                                    <el-skeleton-item variant="p" style="width: 20%"></el-skeleton-item>
+                                    <el-skeleton-item variant="p" style="width: 40%"></el-skeleton-item>
+                                </template>
+                            </el-skeleton>
+                            <el-table v-if="!loading.assets" :data="assets.characters" style="width: 100%">
+                                <el-table-column prop="name" label="角色名称"></el-table-column>
+                                <el-table-column prop="version_count" label="版本数"></el-table-column>
+                                <el-table-column prop="created_at" label="创建时间"></el-table-column>
+                            </el-table>
+                        </el-tab-pane>
+                        <el-tab-pane label="场景" name="scenes">
+                            <el-skeleton :loading="loading.assets" :rows="5" animated>
+                                <template #template>
+                                    <el-skeleton-item variant="p" style="width: 30%"></el-skeleton-item>
+                                    <el-skeleton-item variant="p" style="width: 20%"></el-skeleton-item>
+                                    <el-skeleton-item variant="p" style="width: 20%"></el-skeleton-item>
+                                </template>
+                            </el-skeleton>
+                            <el-table v-if="!loading.assets" :data="assets.scenes" style="width: 100%">
+                                <el-table-column prop="name" label="场景名称"></el-table-column>
+                                <el-table-column prop="type" label="场景类型"></el-table-column>
+                                <el-table-column prop="version_count" label="版本数"></el-table-column>
+                            </el-table>
+                        </el-tab-pane>
+                        <el-tab-pane label="道具" name="props">
+                            <el-skeleton :loading="loading.assets" :rows="5" animated>
+                                <template #template>
+                                    <el-skeleton-item variant="p" style="width: 30%"></el-skeleton-item>
+                                    <el-skeleton-item variant="p" style="width: 20%"></el-skeleton-item>
+                                    <el-skeleton-item variant="p" style="width: 20%"></el-skeleton-item>
+                                </template>
+                            </el-skeleton>
+                            <el-table v-if="!loading.assets" :data="assets.props" style="width: 100%">
+                                <el-table-column prop="name" label="道具名称"></el-table-column>
+                                <el-table-column prop="type" label="道具类型"></el-table-column>
+                                <el-table-column prop="version_count" label="版本数"></el-table-column>
+                            </el-table>
+                        </el-tab-pane>
+                        <el-tab-pane label="风格模板" name="styles">
+                            <el-skeleton :loading="loading.assets" :rows="5" animated>
+                                <template #template>
+                                    <el-skeleton-item variant="p" style="width: 50%"></el-skeleton-item>
+                                    <el-skeleton-item variant="p" style="width: 30%"></el-skeleton-item>
+                                    <el-skeleton-item variant="button" style="width: 10%"></el-skeleton-item>
+                                </template>
+                            </el-skeleton>
+                            <el-table v-if="!loading.assets" :data="assets.styles" style="width: 100%">
+                                <el-table-column prop="description" label="风格描述"></el-table-column>
+                                <el-table-column prop="created_at" label="创建时间"></el-table-column>
+                                <el-table-column label="操作">
+                                    <template #default="{row}">
+                                        <el-button size="small" @click="loadStyle(row.path.split('/').pop().replace('.json', ''))" :loading="loading.style">加载</el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                            <el-card style="margin-top: 20px;">
+                                <template #header>
+                                    <div class="card-header">
+                                        <span>保存新风格模板</span>
+                                    </div>
+                                </template>
+                                <el-form :model="styleForm" label-width="80px">
+                                    <el-form-item label="风格名称">
+                                        <el-input v-model="styleForm.name"></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="风格内容">
+                                        <el-input type="textarea" v-model="styleForm.content" rows="5"></el-input>
+                                    </el-form-item>
+                                    <el-form-item>
+                                        <el-button type="primary" @click="saveStyle" :loading="loading.style">保存</el-button>
+                                    </el-form-item>
+                                </el-form>
+                            </el-card>
+                        </el-tab-pane>
+                    </el-tabs>
+                </el-tab-pane>
+                <el-tab-pane label="审核结果" name="audit" v-if="auditResults && auditResults.length > 0">
+                    <h4>审核结果</h4>
+                    <el-card>
+                        <template #header>
+                            <div class="card-header">
+                                <span>审核详情</span>
+                            </div>
+                        </template>
+                        <div v-for="(result, index) in auditResults" :key="index" class="audit-item">
+                            <h5>{{ result.type || '未知类型' }} - {{ result.passed ? '通过' : '未通过' }}</h5>
+                            <p>分数：{{ result.score !== undefined ? result.score : 'N/A' }}</p>
+                            <p v-if="result.reasons && result.reasons.length > 0">原因：{{ result.reasons.join(', ') }}</p>
+                        </div>
+                    </el-card>
+                </el-tab-pane>
+            </el-tabs>
         </div>
 
         <div class="section">
@@ -86,33 +881,1128 @@
     </div>
 
     <script>
+        // 工具函数模块
+        const Utils = {
+            // 复制文本
+            copyText(text) {
+                navigator.clipboard.writeText(text)
+                    .then(() => {
+                        ElMessage.success('复制成功！');
+                    })
+                    .catch(error => {
+                        console.error('Error copying text:', error);
+                        ElMessage.error('复制失败，请手动复制');
+                    });
+            },
+            
+            // 测试API连接
+            testApiConnection(vm) {
+                console.log('Testing API connection...');
+                vm.loading.apiTest = true;
+                vm.apiConnectionStatus = 'loading';
+                
+                const provider = vm.apiConfig.llm.default_provider;
+                const providerConfig = vm.apiConfig.llm[provider];
+                
+                if (!providerConfig || !providerConfig.api_key) {
+                    ElMessage.error(`请先配置 ${provider} 的API密钥`);
+                    vm.apiConnectionStatus = 'error';
+                    vm.loading.apiTest = false;
+                    return;
+                }
+                
+                ElMessage.info(`正在测试 ${provider} 连接...`);
+                
+                // 调用后端测试API
+                axios.post('/api/test_api_connection', {
+                    provider: provider,
+                    api_key: providerConfig.api_key,
+                    base_url: providerConfig.base_url,
+                    model: providerConfig.model
+                })
+                .then(res => {
+                    if (res.data && res.data.status === 'success') {
+                        vm.apiConnectionStatus = 'success';
+                        ElMessage.success(`${provider} 连接测试成功！`);
+                    } else {
+                        vm.apiConnectionStatus = 'error';
+                        ElMessage.error(res.data.message || '连接测试失败，请检查配置');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error testing API connection:', error);
+                    vm.apiConnectionStatus = 'error';
+                    const errorMsg = error.response?.data?.message || error.message || '网络连接失败';
+                    ElMessage.error(`连接测试失败: ${errorMsg}`);
+                })
+                .finally(() => {
+                    vm.loading.apiTest = false;
+                });
+            },
+            
+            // 测试模型连接
+            testModelConnection(vm) {
+                console.log('Testing model connection...');
+                vm.loading.apiTest = true;
+                vm.modelConnectionStatus = 'loading';
+                
+                // 这里可以添加测试模型连接的逻辑
+                // 例如，发送一个简单的API请求到模型
+                ElMessage.info('正在测试模型连接...');
+                
+                // 模拟测试结果
+                setTimeout(() => {
+                    // 实际项目中，这里应该是真实的API测试
+                    vm.modelConnectionStatus = 'success';
+                    ElMessage.success('模型连接测试成功！');
+                    vm.loading.apiTest = false;
+                }, 1000);
+            },
+            
+            // 通用错误处理
+            handleError(error, defaultMessage) {
+                console.error(defaultMessage, error);
+                const errorMsg = error.response?.data?.message || error.message || defaultMessage;
+                ElMessage.error(errorMsg);
+            },
+            
+            // 通用成功处理
+            handleSuccess(message) {
+                ElMessage.success(message);
+            },
+            
+            // 通用加载状态处理
+            handleLoading(vm, key, isLoading) {
+                if (vm.loading && typeof vm.loading === 'object') {
+                    vm.loading[key] = isLoading;
+                }
+            }
+        };
+        
+        // 配置管理模块
+        const ConfigManager = {
+            // 加载基础配置
+            loadConfig(vm) {
+                console.log('Loading config...');
+                vm.loading.config = true;
+                axios.get('/api/get_config')
+                    .then(res => {
+                        console.log('Config response:', res);
+                        // 处理两种可能的响应格式
+                        const configData = res.data.status === 'error' ? res.data : res.data;
+                        if (configData && typeof configData === 'object') {
+                            // 如果返回的是错误信息，保持使用默认配置
+                            if (configData.status === 'error') {
+                                console.warn('Config load error:', configData.message);
+                                ElMessage.warning('使用默认配置');
+                            } else {
+                                // 深度合并配置，保持前端默认值
+                                vm.config = Object.assign({}, vm.config, configData);
+                                console.log('Config set:', vm.config);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '加载配置失败，使用默认配置');
+                    })
+                    .finally(() => {
+                        vm.loading.config = false;
+                    });
+            },
+            
+            // 保存基础配置
+            saveConfig(vm) {
+                console.log('Saving config...', vm.config);
+                vm.loading.config = true;
+                
+                // 构建正确的配置结构 - 使用apiConfig中的配置
+                const configToSave = {
+                    llm: {
+                        default_provider: vm.apiConfig.llm.default_provider,
+                        siliconflow: {
+                            api_key: vm.apiConfig.llm.siliconflow.api_key || '',
+                            model: vm.apiConfig.llm.siliconflow.model || 'deepseek-ai/DeepSeek-V3.2'
+                        },
+                        volcengine: {
+                            api_key: vm.apiConfig.llm.volcengine.api_key || '',
+                            model: vm.apiConfig.llm.volcengine.model || 'doubao-seed-2-0-pro-260215'
+                        },
+                        zhipu: {
+                            api_key: vm.apiConfig.llm.zhipu.api_key || '',
+                            model: vm.apiConfig.llm.zhipu.model || 'glm-4'
+                        },
+                        qwen: {
+                            api_key: vm.apiConfig.llm.qwen.api_key || '',
+                            model: vm.apiConfig.llm.qwen.model || 'qwen-max'
+                        },
+                        openai: {
+                            api_key: vm.apiConfig.llm.openai.api_key || '',
+                            model: vm.apiConfig.llm.openai.model || 'gpt-4o'
+                        },
+                        anthropic: {
+                            api_key: vm.apiConfig.llm.anthropic.api_key || '',
+                            model: vm.apiConfig.llm.anthropic.model || 'claude-3-opus-20240229'
+                        }
+                    },
+                    basic: {
+                        test_mode_episodes: vm.config.basic.test_mode_episodes,
+                        render_enabled: vm.renderConfig.basic.render_enabled,
+                        render_mode: vm.renderConfig.basic.render_mode,
+                        output_root: vm.renderConfig.basic.output_root,
+                        // V8 平台优化配置
+                        target_platform: vm.config.basic.target_platform || 'tiktok',
+                        content_strategy: vm.config.basic.content_strategy || 'romance_domination_strategy',
+                        target_audience: vm.config.basic.target_audience || 'western_female_18_35'
+                    },
+                    comfyui: vm.renderConfig.comfyui
+                };
+                
+                axios.post('/api/save_config', configToSave)
+                    .then(res => {
+                        console.log('Save config response:', res);
+                        if (res.data && res.data.status === 'success') {
+                            Utils.handleSuccess('配置保存成功！');
+                            console.log('Config saved successfully');
+                            // 重新加载配置以确认
+                            this.loadConfig(vm);
+                        } else {
+                            const errMsg = res.data && res.data.message ? res.data.message : '保存失败';
+                            ElMessage.error(errMsg);
+                        }
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '保存配置失败');
+                    })
+                    .finally(() => {
+                        vm.loading.config = false;
+                    });
+            },
+            
+            // 加载API配置
+            loadApiConfig(vm) {
+                console.log('Loading API config...');
+                vm.loading.apiConfig = true;
+                axios.get('/api/get_api_config')
+                    .then(res => {
+                        console.log('API config response:', res);
+                        if (res.data && res.data.status === 'success' && res.data.config) {
+                            // 深度合并配置
+                            const llmConfig = res.data.config.llm || {};
+                            vm.apiConfig.llm = Object.assign({}, vm.apiConfig.llm, llmConfig);
+                            console.log('API config loaded:', vm.apiConfig);
+                            Utils.handleSuccess('API配置加载成功');
+                        } else {
+                            console.warn('API config load warning:', res.data);
+                            ElMessage.warning('使用默认API配置');
+                        }
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '加载API配置失败，使用默认配置');
+                    })
+                    .finally(() => {
+                        vm.loading.apiConfig = false;
+                    });
+            },
+            
+            // 保存API配置
+            saveApiConfig(vm) {
+                console.log('Saving API config...', vm.apiConfig);
+                vm.loading.apiConfig = true;
+                axios.post('/api/save_api_config', vm.apiConfig)
+                    .then(res => {
+                        console.log('Save API config response:', res);
+                        if (res.data && res.data.status === 'success') {
+                            Utils.handleSuccess('API配置保存成功！');
+                            console.log('API config saved successfully');
+                        } else {
+                            const errMsg = res.data && res.data.message ? res.data.message : '保存失败';
+                            ElMessage.error(errMsg);
+                        }
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '保存API配置失败');
+                    })
+                    .finally(() => {
+                        vm.loading.apiConfig = false;
+                    });
+            },
+            
+            // 加载渲染配置
+            loadRenderConfig(vm) {
+                console.log('Loading render config...');
+                vm.loading.renderConfig = true;
+                axios.get('/api/get_render_config')
+                    .then(res => {
+                        console.log('Render config response:', res);
+                        if (res.data && res.data.status === 'success' && res.data.config) {
+                            // 深度合并配置
+                            const config = res.data.config;
+                            if (config.basic) {
+                                vm.renderConfig.basic = Object.assign({}, vm.renderConfig.basic, config.basic);
+                            }
+                            if (config.comfyui) {
+                                vm.renderConfig.comfyui = Object.assign({}, vm.renderConfig.comfyui, config.comfyui);
+                            }
+                            console.log('Render config loaded:', vm.renderConfig);
+                            Utils.handleSuccess('渲染配置加载成功');
+                        } else {
+                            console.warn('Render config load warning:', res.data);
+                            ElMessage.warning('使用默认渲染配置');
+                        }
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '加载渲染配置失败，使用默认配置');
+                    })
+                    .finally(() => {
+                        vm.loading.renderConfig = false;
+                    });
+            },
+            
+            // 保存渲染配置
+            saveRenderConfig(vm) {
+                console.log('Saving render config...', vm.renderConfig);
+                vm.loading.renderConfig = true;
+                axios.post('/api/save_render_config', vm.renderConfig)
+                    .then(res => {
+                        console.log('Save render config response:', res);
+                        if (res.data && res.data.status === 'success') {
+                            Utils.handleSuccess('渲染配置保存成功！');
+                            console.log('Render config saved successfully');
+                        } else {
+                            const errMsg = res.data && res.data.message ? res.data.message : '保存失败';
+                            ElMessage.error(errMsg);
+                        }
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '保存渲染配置失败');
+                    })
+                    .finally(() => {
+                        vm.loading.renderConfig = false;
+                    });
+            },
+            
+            // 加载任务配置
+            loadTaskConfigs(vm) {
+                console.log('Loading task configs...');
+                vm.loading.taskConfigs = true;
+                axios.get('/api/get_api_config')
+                    .then(res => {
+                        console.log('API config response:', res);
+                        if (res.data && res.data.status === 'success' && res.data.config && res.data.config.llm) {
+                            const taskConfigs = res.data.config.llm.task_configs || {};
+                            vm.taskConfigs = Object.assign({}, vm.taskConfigs, taskConfigs);
+                            console.log('Task configs loaded:', vm.taskConfigs);
+                        }
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '加载任务配置失败');
+                    })
+                    .finally(() => {
+                        vm.loading.taskConfigs = false;
+                    });
+            },
+            
+            // 保存任务配置
+            saveTaskConfigs(vm) {
+                console.log('Saving task configs...', vm.taskConfigs);
+                vm.loading.taskConfigs = true;
+                // 构建API配置对象
+                const apiConfig = {
+                    llm: {
+                        default_provider: vm.apiConfig.llm.default_provider,
+                        siliconflow: vm.apiConfig.llm.siliconflow,
+                        openai: vm.apiConfig.llm.openai,
+                        anthropic: vm.apiConfig.llm.anthropic,
+                        volcengine: vm.apiConfig.llm.volcengine,
+                        zhipu: vm.apiConfig.llm.zhipu,
+                        qwen: vm.apiConfig.llm.qwen,
+                        task_configs: vm.taskConfigs
+                    }
+                };
+                axios.post('/api/save_api_config', apiConfig)
+                    .then(res => {
+                        console.log('Save task configs response:', res);
+                        if (res.data && res.data.status === 'success') {
+                            Utils.handleSuccess('任务配置保存成功！');
+                            console.log('Task configs saved successfully');
+                        } else {
+                            const errMsg = res.data && res.data.message ? res.data.message : '保存失败';
+                            ElMessage.error(errMsg);
+                        }
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '保存任务配置失败');
+                    })
+                    .finally(() => {
+                        vm.loading.taskConfigs = false;
+                    });
+            },
+            
+            // 应用配置到所有任务
+            applyToAllTasks(vm, provider, model) {
+                console.log('Applying to all tasks:', provider, model);
+                for (const task in vm.taskConfigs) {
+                    vm.taskConfigs[task].provider = provider;
+                    vm.taskConfigs[task].model = model;
+                }
+                Utils.handleSuccess('已应用到所有任务');
+            }
+        };
+        
+        // 任务管理模块
+        const TaskManager = {
+            // 启动任务
+            startTask(vm) {
+                console.log('Starting task...');
+                vm.loading.task = true;
+                axios.post('/api/start_task')
+                    .then(res => {
+                        console.log('Start task response:', res);
+                        if (res.data.status === 'success') {
+                            vm.running = true;
+                            vm.logs = [];
+                            // 重置任务进度
+                            vm.taskProgress = {
+                                current: 0,
+                                total: 0,
+                                status: '开始生成'
+                            };
+                            Utils.handleSuccess('任务启动成功！查看日志获取进度');
+                            console.log('Running set to:', vm.running);
+                        } else {
+                            console.error('Start task failed:', res.data.message);
+                            ElMessage.error(`启动任务失败: ${res.data.message}`);
+                        }
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '启动任务失败');
+                    })
+                    .finally(() => {
+                        vm.loading.task = false;
+                    });
+            },
+            
+            // 一键生成完整工作流
+            startFullWorkflow(vm) {
+                console.log('Starting full workflow...');
+                
+                if (!vm.hasNovelUploaded) {
+                    ElMessage.warning('请先上传小说文件！');
+                    return;
+                }
+                
+                vm.loading.task = true;
+                vm.running = true;
+                vm.logs = [];
+                
+                // 初始化工作流程状态
+                vm.currentWorkflowStep = 1; // 从第2步开始（第1步是上传）
+                vm.detailedProgress = [];
+                vm.estimatedTime = 0;
+                vm.taskProgress = {
+                    current: 0,
+                    total: 0,
+                    status: '初始化工作流'
+                };
+                
+                Utils.handleSuccess('一键生成工作流已启动！');
+                
+                // 调用后端API启动完整工作流
+                axios.post('/api/start_full_workflow', {
+                    template_id: vm.selectedTemplate,
+                    config: vm.config.basic.test_mode_episodes
+                })
+                .then(res => {
+                    console.log('Full workflow response:', res);
+                    if (res.data.status === 'success') {
+                        vm.taskProgress.status = '工作流运行中';
+                        
+                        // 开始轮询详细进度
+                        this.startDetailedProgressPolling(vm);
+                        
+                        ElMessage.success('完整工作流已启动，请查看进度');
+                    } else {
+                        vm.running = false;
+                        ElMessage.error(`启动工作流失败: ${res.data.message}`);
+                    }
+                })
+                .catch(error => {
+                    vm.running = false;
+                    Utils.handleError(error, '启动工作流失败');
+                })
+                .finally(() => {
+                    vm.loading.task = false;
+                });
+            },
+            
+            // 轮询详细进度
+            startDetailedProgressPolling(vm) {
+                const pollInterval = 2000; // 每2秒轮询一次
+                
+                const poll = () => {
+                    if (!vm.running) return;
+                    
+                    setTimeout(() => {
+                        axios.get('/api/get_detailed_progress')
+                            .then(res => {
+                                if (res.data.status === 'success') {
+                                    const data = res.data.data;
+                                    
+                                    // 更新工作流步骤
+                                    vm.currentWorkflowStep = data.current_step || 0;
+                                    
+                                    // 更新详细进度
+                                    vm.detailedProgress = data.detailed_progress || [];
+                                    
+                                    // 更新总体进度
+                                    if (data.overall_progress) {
+                                        vm.taskProgress = data.overall_progress;
+                                    }
+                                    
+                                    // 更新预计时间
+                                    vm.estimatedTime = data.estimated_time || 0;
+                                    
+                                    // 检查是否完成
+                                    if (data.completed) {
+                                        vm.running = false;
+                                        vm.taskProgress.status = '已完成';
+                                        ElMessage.success('视频包生成完成！');
+                                        return;
+                                    }
+                                }
+                                
+                                // 继续轮询
+                                poll();
+                            })
+                            .catch(error => {
+                                console.error('Error polling detailed progress:', error);
+                                poll(); // 即使出错也继续轮询
+                            });
+                    }, pollInterval);
+                };
+                
+                poll();
+            },
+            
+            // 暂停任务
+            pauseTask(vm) {
+                console.log('Pausing task...');
+                vm.loading.task = true;
+                axios.post('/api/pause_task')
+                    .then(() => {
+                        vm.isPaused = true;
+                        vm.taskProgress.status = '已暂停';
+                        Utils.handleSuccess('任务已暂停');
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '暂停任务失败');
+                    })
+                    .finally(() => {
+                        vm.loading.task = false;
+                    });
+            },
+            
+            // 继续任务
+            resumeTask(vm) {
+                console.log('Resuming task...');
+                vm.loading.task = true;
+                axios.post('/api/resume_task')
+                    .then(() => {
+                        vm.isPaused = false;
+                        vm.taskProgress.status = '继续生成';
+                        Utils.handleSuccess('任务已继续');
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '继续任务失败');
+                    })
+                    .finally(() => {
+                        vm.loading.task = false;
+                    });
+            },
+            
+            // 停止任务
+            stopTask(vm) {
+                console.log('Stopping task...');
+                vm.loading.task = true;
+                axios.post('/api/stop_task')
+                    .then(() => {
+                        vm.running = false;
+                        vm.isPaused = false;
+                        vm.taskProgress.status = '已停止';
+                        Utils.handleSuccess('任务已停止');
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '停止任务失败');
+                    })
+                    .finally(() => {
+                        vm.loading.task = false;
+                    });
+            },
+            
+            // 更新任务进度
+            updateTaskProgress(vm, progress) {
+                if (progress) {
+                    vm.taskProgress = Object.assign({}, vm.taskProgress, progress);
+                }
+            }
+        };
+        
+        // 数据管理模块
+        const DataManager = {
+            // 加载剧集列表
+            loadEpisodes(vm) {
+                vm.loading.episodes = true;
+                axios.get('/api/get_episodes')
+                    .then(res => {
+                        vm.episodes = res.data.episodes;
+                        Utils.handleSuccess('剧集列表加载成功！');
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '加载剧集列表失败');
+                    })
+                    .finally(() => {
+                        vm.loading.episodes = false;
+                    });
+            },
+            
+            // 加载分镜
+            viewEpisode(vm, episodeId) {
+                vm.loading.storyboard = true;
+                axios.get(`/api/get_storyboard/${episodeId}`)
+                    .then(res => {
+                        if (res.data.status === 'success') {
+                            vm.currentEpisode = episodeId;
+                            vm.currentStoryboard = res.data.storyboard;
+                            vm.activeTab = 'storyboard';
+                            Utils.handleSuccess('分镜加载成功！');
+                        } else {
+                            ElMessage.error(res.data.message);
+                        }
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '加载分镜失败');
+                    })
+                    .finally(() => {
+                        vm.loading.storyboard = false;
+                    });
+            },
+            
+            // 加载预览数据
+            previewEpisode(vm, episodeId) {
+                vm.loading.preview = true;
+                axios.get(`/api/get_preview/${episodeId}`)
+                    .then(res => {
+                        if (res.data.status === 'success') {
+                            vm.previewData = res.data.data;
+                            vm.activeTab = 'preview';
+                            Utils.handleSuccess('预览数据加载成功！');
+                        } else {
+                            ElMessage.error(res.data.message);
+                        }
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '加载预览数据失败');
+                    })
+                    .finally(() => {
+                        vm.loading.preview = false;
+                    });
+            },
+            
+            // 加载审核结果
+            viewAuditResults(vm, episodeId) {
+                vm.loading.audit = true;
+                axios.get(`/api/get_audit_results/${episodeId}`)
+                    .then(res => {
+                        if (res.data.status === 'success') {
+                            // 安全地获取审核结果数据
+                            const auditData = res.data.data || {};
+                            vm.auditResults = auditData.audit_results || [];
+                            vm.activeTab = 'audit';
+                            if (vm.auditResults.length > 0) {
+                                Utils.handleSuccess('审核结果加载成功！');
+                            } else {
+                                ElMessage.info('暂无审核结果');
+                            }
+                        } else {
+                            ElMessage.error(res.data.message || '加载审核结果失败');
+                        }
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '加载审核结果失败');
+                    })
+                    .finally(() => {
+                        vm.loading.audit = false;
+                    });
+            },
+            
+            // 加载资产库
+            loadAssets(vm) {
+                vm.loading.assets = true;
+                axios.get('/api/get_assets')
+                    .then(res => {
+                        if (res.data.status === 'success') {
+                            vm.assets = res.data.data;
+                            Utils.handleSuccess('资产库加载成功！');
+                        } else {
+                            ElMessage.error(res.data.message);
+                        }
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '加载资产库失败');
+                    })
+                    .finally(() => {
+                        vm.loading.assets = false;
+                    });
+            },
+            
+            // 保存风格模板
+            saveStyle(vm) {
+                // 验证风格名称
+                if (!vm.styleForm.name || vm.styleForm.name.trim() === '') {
+                    ElMessage.error('请输入风格名称');
+                    return;
+                }
+                
+                // 验证风格内容
+                if (!vm.styleForm.content || vm.styleForm.content.trim() === '') {
+                    ElMessage.error('请输入风格内容');
+                    return;
+                }
+                
+                try {
+                    const content = JSON.parse(vm.styleForm.content);
+                    vm.loading.style = true;
+                    axios.post('/api/save_style', {
+                        name: vm.styleForm.name.trim(),
+                        content: content
+                    })
+                    .then(res => {
+                        if (res.data.status === 'success') {
+                            Utils.handleSuccess(res.data.message);
+                            DataManager.loadAssets(vm);
+                            vm.styleForm.name = '';
+                            vm.styleForm.content = '';
+                        } else {
+                            ElMessage.error(res.data.message);
+                        }
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '保存风格模板失败');
+                    })
+                    .finally(() => {
+                        vm.loading.style = false;
+                    });
+                } catch (error) {
+                    console.error('Error parsing style content:', error);
+                    ElMessage.error('风格内容格式错误，请检查JSON格式');
+                }
+            },
+            
+            // 加载风格模板
+            loadStyle(vm, styleName) {
+                vm.loading.style = true;
+                axios.get(`/api/get_style/${styleName}`)
+                    .then(res => {
+                        if (res.data.status === 'success') {
+                            vm.styleForm.name = styleName;
+                            vm.styleForm.content = JSON.stringify(res.data.data, null, 2);
+                            Utils.handleSuccess('风格模板加载成功！');
+                            vm.activeAssetTab = 'styles';
+                        } else {
+                            ElMessage.error(res.data.message);
+                        }
+                    })
+                    .catch(error => {
+                        Utils.handleError(error, '加载风格模板失败');
+                    })
+                    .finally(() => {
+                        vm.loading.style = false;
+                    });
+            }
+        };
+        
+        // 简化版Vue应用
         const { createApp } = Vue;
         const { ElMessage } = ElementPlus;
+        
+        console.log('Vue app initializing...');
+        
         createApp({
             data() {
                 return {
-                    config: {},
+                    config: {
+                        basic: {
+                            test_mode_episodes: 3,
+                            render_enabled: false,
+                            // V8 平台优化配置
+                            target_platform: 'tiktok',
+                            content_strategy: 'romance_domination_strategy',
+                            target_audience: 'western_female_18_35'
+                        },
+                        llm: {
+                            default_provider: 'volcengine',
+                            providers: {
+                                openai: {
+                                    api_key: '',
+                                    base_url: 'https://api.openai.com/v1',
+                                    model: 'gpt-4o'
+                                },
+                                anthropic: {
+                                    api_key: '',
+                                    base_url: 'https://api.anthropic.com',
+                                    model: 'claude-3-opus-20240229'
+                                },
+                                volcengine: {
+                                    api_key: '',
+                                    base_url: 'https://ark.cn-beijing.volces.com/api/v3',
+                                    model: 'doubao-seed-2-0-pro-260215'
+                                },
+                                zhipu: {
+                                    api_key: '',
+                                    base_url: 'https://open.bigmodel.cn/api/paas/v4',
+                                    model: 'glm-4'
+                                },
+                                qwen: {
+                                    api_key: '',
+                                    base_url: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+                                    model: 'qwen3-max'
+                                },
+                                siliconflow: {
+                                    api_key: '',
+                                    base_url: 'https://api.siliconflow.cn/v1',
+                                    model: 'deepseek-ai/DeepSeek-V3.2'
+                                }
+                            }
+                        },
+                        comfyui: {
+                            server_url: 'http://127.0.0.1:8188'
+                        }
+                    },
                     logs: [],
                     running: false,
-                    pollTimer: null
+                    pollTimer: null,
+                    episodes: [],
+                    activeTab: 'episodes',
+                    currentEpisode: null,
+                    currentStoryboard: null,
+                    previewData: null,
+                    activeShots: [],
+                    assets: {
+                        characters: [],
+                        scenes: [],
+                        props: [],
+                        styles: []
+                    },
+                    activeAssetTab: 'characters',
+                    styleForm: {
+                        name: '',
+                        content: ''
+                    },
+                    auditResults: null,
+                    modelConnectionStatus: null,
+                    isPaused: false,
+                    // API配置（小说/剧本/分集生成）
+                    apiConfig: {
+                        llm: {
+                            default_provider: 'siliconflow',
+                            siliconflow: {
+                                api_key: '',
+                                base_url: 'https://api.siliconflow.cn/v1',
+                                model: 'deepseek-ai/DeepSeek-V3.2'
+                            },
+                            openai: {
+                                api_key: '',
+                                base_url: 'https://api.openai.com/v1',
+                                model: 'gpt-4o'
+                            },
+                            anthropic: {
+                                api_key: '',
+                                base_url: 'https://api.anthropic.com/v1',
+                                model: 'claude-3-opus-20240229'
+                            },
+                            volcengine: {
+                                api_key: '',
+                                base_url: 'https://ark.cn-beijing.volces.com/api/v3',
+                                model: 'doubao-seed-2-0-pro-260215'
+                            },
+                            zhipu: {
+                                api_key: '',
+                                base_url: 'https://open.bigmodel.cn/api/paas/v4',
+                                model: 'glm-4'
+                            },
+                            qwen: {
+                                api_key: '',
+                                base_url: 'https://dashscope.aliyuncs.com/api/v1',
+                                model: 'qwen-max'
+                            }
+                        }
+                    },
+                    apiConnectionStatus: null,
+                    // 渲染配置（图像/视频生成）
+                    renderConfig: {
+                        basic: {
+                            render_enabled: false,
+                            render_mode: 'comfyui',
+                            output_root: 'output/'
+                        },
+                        comfyui: {
+                            server_url: 'http://127.0.0.1:8188',
+                            workflow_template: 'workflow_api.json',
+                            timeout: 300
+                        }
+                    },
+                    // 任务类型特定配置
+                    taskConfigs: {
+                        semantic_analysis: { provider: 'siliconflow', model: 'deepseek-ai/DeepSeek-V3.2' },
+                        episode_splitting: { provider: 'volcengine', model: 'doubao-seed-2-0-pro-260215' },
+                        screenplay: { provider: 'openai', model: 'gpt-4o' },
+                        storyboard: { provider: 'anthropic', model: 'claude-3-opus-20240229' },
+                        audio_design: { provider: 'siliconflow', model: 'deepseek-ai/DeepSeek-V3.2' },
+                        multi_language: { provider: 'qwen', model: 'qwen-max' },
+                        quality_audit: { provider: 'anthropic', model: 'claude-3-opus-20240229' }
+                    },
+                    // 加载状态
+                    loading: {
+                        config: false,
+                        apiConfig: false,
+                        renderConfig: false,
+                        taskConfigs: false,
+                        task: false,
+                        episodes: false,
+                        assets: false,
+                        storyboard: false,
+                        preview: false,
+                        audit: false,
+                        style: false,
+                        apiTest: false
+                    },
+                    // 任务进度
+                    taskProgress: {
+                        current: 0,
+                        total: 0,
+                        status: ''
+                    },
+                    // 工作流程
+                    workflowSteps: [
+                        { title: '上传小说', description: '选择小说文件' },
+                        { title: '语义分析', description: '分析小说内容' },
+                        { title: '分集生成', description: '生成剧集列表' },
+                        { title: '剧本创作', description: '生成剧本节拍' },
+                        { title: '台词生成', description: '生成角色台词' },
+                        { title: '分镜设计', description: '生成分镜脚本' },
+                        { title: '音频设计', description: '设计音频方案' },
+                        { title: '渲染打包', description: '生成视频包' }
+                    ],
+                    currentWorkflowStep: 0,
+                    detailedProgress: [],
+                    estimatedTime: 0,
+                    hasNovelUploaded: false,
+                    // 模板系统
+                    templates: [
+                        {
+                            id: 'ancient',
+                            name: '古风武侠',
+                            icon: '⚔️',
+                            description: '适合古装、武侠、仙侠类小说',
+                            config: {
+                                genre: '古风',
+                                style: '水墨画风格',
+                                lighting: '柔和自然光',
+                                camera: '古典构图',
+                                music: '古筝/琵琶',
+                                dialogue_style: '文言文+口语'
+                            }
+                        },
+                        {
+                            id: 'modern',
+                            name: '现代都市',
+                            icon: '🏙️',
+                            description: '适合都市、职场、爱情类小说',
+                            config: {
+                                genre: '现代',
+                                style: '电影写实风格',
+                                lighting: '现代灯光',
+                                camera: '电影镜头',
+                                music: '流行音乐',
+                                dialogue_style: '现代口语'
+                            }
+                        },
+                        {
+                            id: 'scifi',
+                            name: '科幻未来',
+                            icon: '🚀',
+                            description: '适合科幻、赛博朋克、末世类小说',
+                            config: {
+                                genre: '科幻',
+                                style: '高科技视觉风格',
+                                lighting: '霓虹灯效果',
+                                camera: '动态镜头',
+                                music: '电子音乐',
+                                dialogue_style: '科技感语言'
+                            }
+                        },
+                        {
+                            id: 'romance',
+                            name: '浪漫爱情',
+                            icon: '💕',
+                            description: '适合言情、甜宠、虐恋类小说',
+                            config: {
+                                genre: '言情',
+                                style: '唯美浪漫风格',
+                                lighting: '柔光滤镜',
+                                camera: '特写镜头',
+                                music: '轻音乐/钢琴',
+                                dialogue_style: '情感丰富'
+                            }
+                        },
+                        {
+                            id: 'suspense',
+                            name: '悬疑推理',
+                            icon: '🔍',
+                            description: '适合悬疑、推理、惊悚类小说',
+                            config: {
+                                genre: '悬疑',
+                                style: '暗黑风格',
+                                lighting: '高对比度',
+                                camera: '手持镜头',
+                                music: '紧张音效',
+                                dialogue风格: '简洁有力'
+                            }
+                        },
+                        {
+                            id: 'fantasy',
+                            name: '奇幻冒险',
+                            icon: '🐉',
+                            description: '适合奇幻、魔法、冒险类小说',
+                            config: {
+                                genre: '奇幻',
+                                style: '魔幻现实主义',
+                                lighting: '戏剧性光影',
+                                camera: '史诗镜头',
+                                music: '交响乐',
+                                dialogue_style: '史诗感'
+                            }
+                        },
+                        // ====== V8 平台优化专用模板 ======
+                        {
+                            id: 'tiktok_romance',
+                            name: '📱 TikTok浪漫短剧',
+                            icon: '💕',
+                            description: '欧美女性受众 | TikTok病毒传播 | 情绪过山车',
+                            config: {
+                                genre: 'romance_contemporary',
+                                style: 'aesthetic_warm_cinematic',
+                                lighting: 'golden hour warmth, soft bokeh',
+                                camera: 'close-ups on eyes/hands, slow motion emotional',
+                                music: 'acoustic guitar, lo-fi beats, trending TikTok sounds',
+                                dialogue_style: 'naturalistic Western conversation',
+                                target_platform: 'tiktok',
+                                content_strategy: 'romance_domination_strategy',
+                                target_audience: 'western_female_18_35'
+                            }
+                        },
+                        {
+                            id: 'tiktok_empowerment',
+                            name: '📱 TikTok逆袭爽剧',
+                            icon: '💪',
+                            description: '职场女性逆袭 | 高分享性 | 爽感释放',
+                            config: {
+                                genre: 'urban_professional_woman',
+                                style: 'dramatic_contrast_cinematic',
+                                lighting: 'dramatic contrast, spotlight moments',
+                                camera: 'low angles to eye-level, power poses',
+                                music: 'building orchestral drops, empowering anthems',
+                                dialogue_style: 'firm resolve, inner strength voice',
+                                target_platform: 'tiktok',
+                                content_strategy: 'empowerment_revenge_strategy',
+                                target_audience: 'western_female_25_45'
+                            }
+                        },
+                        {
+                            id: 'tiktok_mystery',
+                            name: '📱 TikTok奇幻悬疑',
+                            icon: '🔮',
+                            description: '超自然+悬念 | 高追剧率 | 循环钩子',
+                            config: {
+                                genre: 'paranormal_romance',
+                                style: 'ethereal_mystical_cinematic',
+                                lighting: 'ethereal glows, magical particle effects',
+                                camera: 'floating camera effects, supernatural POV',
+                                music: 'ethereal choirs, haunting melodies',
+                                dialogue_style: 'wonder mixed with fear narration',
+                                target_platform: 'tiktok',
+                                content_strategy: 'mystery_paranormal_strategy',
+                                target_audience: 'western_female_18_35'
+                            }
+                        },
+                        {
+                            id: 'fb_reels_drama',
+                            name: '📘 FB Reels深度剧情',
+                            icon: '🎬',
+                            description: 'Facebook/Instagram | 更深叙事 | 角色刻画',
+                            config: {
+                                genre: 'character_study',
+                                style: 'polished_professional_cinematic',
+                                lighting: 'cinematic polished lighting',
+                                camera: 'steady professional cinematography',
+                                music: 'cinematic score, polished production',
+                                dialogue_style: 'cinematic naturalistic',
+                                target_platform: 'facebook_reels',
+                                content_strategy: 'romance_domination_strategy',
+                                target_audience: 'western_female_25_45'
+                            }
+                        }
+                    ],
+                    selectedTemplate: null
                 }
             },
-            async mounted() {
-                await this.loadConfig();
+            mounted() {
+                console.log('Vue app mounted');
+                ConfigManager.loadConfig(this);
+                ConfigManager.loadApiConfig(this);
+                ConfigManager.loadRenderConfig(this);
+                ConfigManager.loadTaskConfigs(this);
+                DataManager.loadEpisodes(this);
+                DataManager.loadAssets(this);
                 this.pollLogs();
             },
             beforeUnmount() {
                 if (this.pollTimer) clearInterval(this.pollTimer);
             },
             methods: {
-                async loadConfig() {
-                    const res = await axios.get('/api/get_config');
-                    this.config = res.data;
-                },
-                async saveConfig() {
-                    await axios.post('/api/save_config', this.config);
-                    ElMessage.success('配置保存成功！');
-                },
+                // 配置管理
+                loadConfig() { ConfigManager.loadConfig(this); },
+                saveConfig() { ConfigManager.saveConfig(this); },
+                loadApiConfig() { ConfigManager.loadApiConfig(this); },
+                saveApiConfig() { ConfigManager.saveApiConfig(this); },
+                loadRenderConfig() { ConfigManager.loadRenderConfig(this); },
+                saveRenderConfig() { ConfigManager.saveRenderConfig(this); },
+                loadTaskConfigs() { ConfigManager.loadTaskConfigs(this); },
+                saveTaskConfigs() { ConfigManager.saveTaskConfigs(this); },
+                applyToAllTasks(provider, model) { ConfigManager.applyToAllTasks(this, provider, model); },
+                
+                // 任务管理
+                startTask() { TaskManager.startTask(this); },
+                startFullWorkflow() { TaskManager.startFullWorkflow(this); },
+                pauseTask() { TaskManager.pauseTask(this); },
+                resumeTask() { TaskManager.resumeTask(this); },
+                stopTask() { TaskManager.stopTask(this); },
+                
+                // 数据管理
+                loadEpisodes() { DataManager.loadEpisodes(this); },
+                viewEpisode(episodeId) { DataManager.viewEpisode(this, episodeId); },
+                previewEpisode(episodeId) { DataManager.previewEpisode(this, episodeId); },
+                viewAuditResults(episodeId) { DataManager.viewAuditResults(this, episodeId); },
+                loadAssets() { DataManager.loadAssets(this); },
+                saveStyle() { DataManager.saveStyle(this); },
+                loadStyle(styleName) { DataManager.loadStyle(this, styleName); },
+                
+                // 工具函数
+                copyText(text) { Utils.copyText(text); },
+                testApiConnection() { Utils.testApiConnection(this); },
+                testModelConnection() { Utils.testModelConnection(this); },
+                
+                // 其他方法
                 beforeUpload(file) {
                     const isTxt = file.type === 'text/plain' || file.name.endsWith('.txt');
                     if (!isTxt) {
@@ -124,29 +2014,266 @@
                 handleUploadSuccess(response, file) {
                     ElMessage.success('小说上传成功！可以开始生成了');
                 },
-                async startTask() {
-                    await axios.post('/api/start_task');
-                    this.running = true;
-                    this.logs = [];
-                    ElMessage.success('任务启动成功！查看日志获取进度');
+                pollLogs() {
+                    // 优化后的日志轮询机制
+                    let pollInterval = 1000; // 初始轮询间隔
+                    const minInterval = 500; // 最小轮询间隔
+                    const maxInterval = 5000; // 最大轮询间隔
+                    let lastLogsLength = 0; // 上次日志长度
+                    let isPageActive = true; // 页面是否在焦点
+                    
+                    // 监听页面焦点事件
+                    window.addEventListener('focus', () => {
+                        isPageActive = true;
+                        pollInterval = minInterval; // 页面获得焦点时，恢复最小轮询间隔
+                    });
+                    
+                    window.addEventListener('blur', () => {
+                        isPageActive = false;
+                    });
+                    
+                    // 解析日志以提取任务进度
+                    const parseProgressFromLogs = (logs) => {
+                        // 从最新的日志中查找进度信息
+                        for (let i = logs.length - 1; i >= 0; i--) {
+                            const log = logs[i];
+                            // 匹配进度格式，例如："进度: 1/10" 或 "Progress: 50%"
+                            const progressMatch = log.match(/进度[:：]\s*(\d+)\s*\/\s*(\d+)/i);
+                            if (progressMatch) {
+                                const current = parseInt(progressMatch[1]);
+                                const total = parseInt(progressMatch[2]);
+                                return {
+                                    current: current,
+                                    total: total,
+                                    status: `生成中 (${current}/${total})`
+                                };
+                            }
+                            // 匹配百分比进度
+                            const percentMatch = log.match(/进度[:：]\s*(\d+)%/i);
+                            if (percentMatch && this.taskProgress.total > 0) {
+                                const percent = parseInt(percentMatch[1]);
+                                const current = Math.round((percent / 100) * this.taskProgress.total);
+                                return {
+                                    current: current,
+                                    total: this.taskProgress.total,
+                                    status: `生成中 (${percent}%)`
+                                };
+                            }
+                            // 匹配任务状态
+                            if (log.includes('任务完成')) {
+                                return {
+                                    current: this.taskProgress.total,
+                                    total: this.taskProgress.total,
+                                    status: '已完成'
+                                };
+                            }
+                            if (log.includes('任务失败')) {
+                                return {
+                                    current: this.taskProgress.current,
+                                    total: this.taskProgress.total,
+                                    status: '失败'
+                                };
+                            }
+                        }
+                        return null;
+                    };
+                    
+                    const poll = () => {
+                        // 当页面不在焦点时，减少轮询频率
+                        const currentInterval = isPageActive ? pollInterval : maxInterval;
+                        
+                        setTimeout(() => {
+                            axios.get('/api/get_logs')
+                                .then(res => {
+                                    const newLogsLength = res.data.logs.length;
+                                    
+                                    // 更新日志和状态
+                                    this.logs = res.data.logs;
+                                    this.running = res.data.running;
+                                    this.isPaused = res.data.is_paused;
+                                    
+                                    // 解析进度信息
+                                    const progress = parseProgressFromLogs(res.data.logs);
+                                    if (progress) {
+                                        TaskManager.updateTaskProgress(this, progress);
+                                    }
+                                    
+                                    // 滚动到底部
+                                    this.$nextTick(() => {
+                                        const logBox = this.$refs.logBox;
+                                        if (logBox) logBox.scrollTop = logBox.scrollHeight;
+                                    });
+                                    
+                                    // 动态调整轮询间隔
+                                    if (newLogsLength > lastLogsLength) {
+                                        // 有新日志，恢复最小轮询间隔
+                                        pollInterval = minInterval;
+                                    } else if (pollInterval < maxInterval) {
+                                        // 没有新日志，逐渐增加轮询间隔
+                                        pollInterval = Math.min(pollInterval * 1.5, maxInterval);
+                                    }
+                                    
+                                    lastLogsLength = newLogsLength;
+                                })
+                                .catch(error => {
+                                    console.error('Error getting logs:', error);
+                                })
+                                .finally(() => {
+                                    // 继续轮询
+                                    poll();
+                                });
+                        }, currentInterval);
+                    };
+                    
+                    // 开始轮询
+                    poll();
                 },
-                async pollLogs() {
-                    this.pollTimer = setInterval(async () => {
-                        const res = await axios.get('/api/get_logs');
-                        this.logs = res.data.logs;
-                        this.running = res.data.running;
-                        // 滚动到底部
-                        this.$nextTick(() => {
-                            const logBox = this.$refs.logBox;
-                            if (logBox) logBox.scrollTop = logBox.scrollHeight;
-                        });
-                    }, 1000);
-                },
-                async downloadOutput() {
+                downloadOutput() {
                     window.open('/api/download_output');
-                }
+                },
+                
+                // 配置导入/导出
+                exportConfig() {
+                    window.open('/api/export_config');
+                },
+                handleImportSuccess(response, file) {
+                    if (response.status === 'success') {
+                        ElMessage.success('配置导入成功！');
+                        // 重新加载所有配置
+                        ConfigManager.loadConfig(this);
+                        ConfigManager.loadApiConfig(this);
+                        ConfigManager.loadRenderConfig(this);
+                        ConfigManager.loadTaskConfigs(this);
+                    } else {
+                        ElMessage.error(response.message || '配置导入失败');
+                    }
+                },
+                beforeImport(file) {
+                    const isYaml = file.type === 'application/x-yaml' || file.type === 'text/yaml' || file.name.endsWith('.yaml') || file.name.endsWith('.yml');
+                    if (!isYaml) {
+                        ElMessage.error('只能上传YAML格式的配置文件！');
+                        return false;
+                    }
+                    return true;
+                },
+                
+                // 模板系统
+                applyTemplate(template) {
+                    console.log('Applying template:', template);
+                    this.selectedTemplate = template.id;
+                    
+                    // 应用模板配置
+                    const config = template.config;
+                    
+                    // V8: 应用平台优化配置（如果模板包含）
+                    if (config.target_platform) {
+                        this.config.basic.target_platform = config.target_platform;
+                    }
+                    if (config.content_strategy) {
+                        this.config.basic.content_strategy = config.content_strategy;
+                    }
+                    if (config.target_audience) {
+                        this.config.basic.target_audience = config.target_audience;
+                    }
+                    
+                    console.log(`已应用"${template.name}"模板`, config);
+                    ElMessage.success(`已应用"${template.name}"模板${config.target_platform ? ' | 平台: ' + config.target_platform : ''}`);
+                },
+                
+                saveAsTemplate() {
+                    ElMessage.info('保存为模板功能开发中...');
+                    // TODO: 实现保存当前配置为模板的功能
+                },
+                
+                resetToDefault() {
+                    this.selectedTemplate = null;
+                    ElMessage.success('已重置为默认配置');
+                    // TODO: 重置所有配置到默认值
+                },
+                
+                formatTime(seconds) {
+                    if (seconds < 60) {
+                        return `${Math.round(seconds)}秒`;
+                    } else if (seconds < 3600) {
+                        const minutes = Math.floor(seconds / 60);
+                        const secs = Math.round(seconds % 60);
+                        return `${minutes}分${secs}秒`;
+                    } else {
+                        const hours = Math.floor(seconds / 3600);
+                        const minutes = Math.floor((seconds % 3600) / 60);
+                        return `${hours}小时${minutes}分`;
+                    }
+                },
+                
+                getEmotionTagType(emotion) {
+                    const emotionMap = {
+                        'joy': 'success',
+                        'love': '',
+                        'triumph': 'success',
+                        'anger': 'danger',
+                        'fear': 'warning',
+                        'sadness': 'info',
+                        'despair': 'danger',
+                        'suspense': 'warning',
+                        'mystery': 'info',
+                        'nostalgia': ''
+                    };
+                    return emotionMap[emotion?.toLowerCase()] || 'info';
+                },
+                
+                handleUploadSuccess(response, file) {
+                    if (response.status === 'success') {
+                        ElMessage.success(response.message || '上传成功！');
+                        this.hasNovelUploaded = true;
+                        console.log('Novel uploaded successfully:', response);
+                        
+                        // 上传成功后，自动分析小说并推荐配置
+                        this.analyzeAndRecommend();
+                    } else {
+                        ElMessage.error(response.message || '上传失败');
+                    }
+                },
+                
+                // 智能配置推荐
+                analyzeAndRecommend() {
+                    console.log('Analyzing novel and recommending config...');
+                    
+                    // 调用后端API获取智能推荐
+                    axios.get('/api/smart_recommend')
+                        .then(res => {
+                            if (res.data.status === 'success') {
+                                const recommendations = res.data.recommendations;
+                                
+                                // 显示推荐结果
+                                this.showRecommendations(recommendations);
+                            }
+                        })
+                        .catch(error => {
+                            console.log('Smart recommend not available, using defaults');
+                        });
+                },
+                
+                showRecommendations(recommendations) {
+                    let message = '🤖 智能配置推荐：<br><br>';
+                    
+                    for (const key in recommendations) {
+                        const rec = recommendations[key];
+                        message += `• <strong>${rec.name}</strong>: ${rec.value}<br>`;
+                        message += `  <span style="color: #666; font-size: 12px;">${rec.reason}</span><br><br>`;
+                    }
+                    
+                    ElMessage({
+                        dangerouslyUseHTMLString: true,
+                        message: message,
+                        type: 'info',
+                        duration: 5000,
+                        showClose: true
+                    });
+                },
             }
         }).use(ElementPlus).mount('#app');
+        
+        console.log('Vue app mounted successfully');
     </script>
 </body>
 </html>

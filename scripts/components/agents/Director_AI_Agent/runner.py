@@ -5,13 +5,41 @@ import os
 import hashlib
 from config_center import config
 from components.utils.llm_client import get_llm_response
+from components.utils.prompt_engineering import (
+    generate_visual_prompt, generate_video_prompt, generate_audio_prompt,
+    get_shot_parameters_by_emotion, get_shot_parameters_by_scene
+)
+from .cinematic_language_system import (
+    get_cinematic_shot, 
+    generate_cinematic_prompt,
+    DIRECTOR_STYLES,
+    EMOTIONAL_SHOT_MAPPING,
+    SCENE_TYPE_RULES
+)
+from components.upgrade.novel_semantic_analyzer.emotional_analysis_system import (
+    analyze_scene_emotion,
+    calculate_complex_emotion,
+    EMOTION_DIMENSIONS,
+    BASIC_EMOTIONS
+)
+from components.utils.multimodal_consistency import (
+    check_multimodal_consistency,
+    generate_consistency_fix_suggestions,
+    MODALITY_MAPPING_RULES
+)
+from components.utils.western_female_platform_optimizer import (
+    PLATFORM_SPECS,
+    CONTENT_STRATEGIES,
+    TIKTOK_OPTIMIZATION_RULES,
+    AUDIENCE_PREFERENCES,
+    WESTERN_CULTURAL_ADAPTATION
+)
 
 def run_director(screenplay, global_lore, dialogue_script=None, continuity_state=None):
     """
-    Cinematographer (摄影指导) V6 影棚级
-    强制焦段物理学 专业光影塑形 标准运镜术语 零笼统词汇
-    完全符合好莱坞影视工业标准输出
-    新增AI生成、缓存、多模型兼容、人工审核功能
+    Cinematographer (摄影指导) V7 电影级智能版
+    集成电影级镜头语言系统 + 情绪分析 + 多模态一致性
+    支持导演风格模拟、情绪曲线驱动、跨模态对齐
     """
     seq = screenplay['episode_seq']
     beats = screenplay['beats']
@@ -28,7 +56,11 @@ def run_director(screenplay, global_lore, dialogue_script=None, continuity_state
             return cached_storyboard
     
     # 变量池，替换为实际全局角色信息 + 连贯性状态注入
-    main_char = global_lore['characters'][0]
+    characters_list = global_lore.get('characters', [])
+    if not characters_list:
+        print("[Director V8] ⚠️ global_lore中没有角色信息，使用默认角色")
+        characters_list = [{"name": "主角", "visual_traits": [], "face_id": ""}]
+    main_char = characters_list[0]
     main_char_name = main_char['name']
     base_char_traits = "，".join(main_char.get('visual_traits', []))
     # 注入跨集状态（如受伤、衣服破损等）
@@ -39,19 +71,38 @@ def run_director(screenplay, global_lore, dialogue_script=None, continuity_state
         main_char_traits = base_char_traits
     face_id_ref = main_char.get('face_id', '')
     
-    shot_types = ["extreme_close_up", "close_up", "medium_shot", "push_in", "static", "low_angle_shot"]
-    camera_angles = ["eye_level", "low_angle", "high_angle", "dutch_angle", "over_the_shoulder"]
-    lightings = ["natural", "studio", "dramatic", "chiaroscuro", "backlit"]
-    transitions = ["Cut", "Fade_to_black", "Glitch_effect", "Wipe", "Cross_fade", "Flash_cut"]
-    motion_intensities = [3, 5, 6, 8, 4, 7]
-    physics_effects = ["sparks flying", "screen shake", "debris floating", "wind blowing", "rain droplets", "dust particles"]
+    # 扩展镜头类型
+    shot_types = ["extreme_close_up", "close_up", "medium_shot", "medium_close_up", "long_shot", "extreme_long_shot", "two_shot", "group_shot", "over_the_shoulder", "point_of_view", "push_in", "pull_out", "tracking_shot", "dolly_shot", "crane_shot", "handheld", "static"]
+    
+    # 扩展镜头角度
+    camera_angles = ["eye_level", "low_angle", "high_angle", "dutch_angle", "over_the_shoulder", "birdseye", "wormseye", "profile", "three_quarter", "frontal"]
+    
+    # 扩展灯光类型
+    lightings = ["natural", "studio", "dramatic", "chiaroscuro", "backlit", "side_lighting", "top_lighting", "under_lighting", "soft_lighting", "hard_lighting", "motivated_lighting", "practical_lighting"]
+    
+    # 扩展转场效果
+    transitions = ["Cut", "Fade_to_black", "Fade_in", "Glitch_effect", "Wipe", "Cross_fade", "Flash_cut", "Match_cut", "J cut", "L cut", "Dissolve", "Iris", "Smash_cut"]
+    
+    # 动态镜头参数
+    motion_intensities = [3, 5, 6, 8, 4, 7, 9, 2, 10]
+    motion_types = ["smooth", "jittery", "steady", "fluid", "abrupt"]
+    
+    # 物理效果
+    physics_effects = ["sparks flying", "screen shake", "debris floating", "wind blowing", "rain droplets", "dust particles", "snowflakes", "leaves falling", "water splashing", "smoke billowing"]
+    
+    # 蒙太奇手法
+    montage_types = ["parallel_montage", "cross_cutting", "metaphorical_montage", "rhythmic_montage", "serial_montage"]
     
     # ==================== V6 强制专业规则 ====================
     # 焦段物理学规则
     LENS_RULES = {
         "desperate/grand": "14mm wide angle, deep depth of field",
         "dialogue/closeup": "85mm portrait lens, shallow depth of field, bokeh",
-        "action": "24mm prime lens, medium depth of field"
+        "action": "24mm prime lens, medium depth of field",
+        "intimate/melancholy": "50mm standard lens, shallow depth of field",
+        "suspense/mystery": "35mm wide angle, deep depth of field",
+        "epic/landscape": "16mm ultra wide angle, deep depth of field",
+        "dynamic/fast": "28mm prime lens, medium depth of field"
     }
     
     # 光影塑形规则
@@ -59,7 +110,11 @@ def run_director(screenplay, global_lore, dialogue_script=None, continuity_state
         "villain/insidious": "Split lighting, high contrast chiaroscuro",
         "holy/high_energy": "Volumetric god rays, rim light, backlit",
         "tense/dramatic": "Hard key light, high contrast, hard shadows",
-        "calm/romantic": "Soft key light, fill light, low contrast"
+        "calm/romantic": "Soft key light, fill light, low contrast",
+        "mystery/suspense": "Low key lighting, high contrast, limited fill",
+        "happy/bright": "High key lighting, soft shadows, even illumination",
+        "nostalgic/warm": "Warm color temperature, soft golden hour lighting",
+        "cold/sterile": "Cool color temperature, flat lighting, high key"
     }
     
     # 运镜术语规则
@@ -68,7 +123,11 @@ def run_director(screenplay, global_lore, dialogue_script=None, continuity_state
         "shock/surprise": "Dolly zoom, fast push in",
         "tension/chase": "Handheld tracking, shaky cam",
         "epic/reveal": "Crane shot, slow pull back",
-        "dialogue": "Static, over the shoulder"
+        "dialogue": "Static, over the shoulder",
+        "intimate/melancholy": "Slow dolly in, shallow focus",
+        "mystery/suspense": "Steady tracking, slow pan",
+        "dynamic/action": "Fast dolly, whip pan",
+        "romantic/tender": "Smooth crane shot, slow movement"
     }
 
     # 对话映射表
@@ -127,6 +186,7 @@ def run_director(screenplay, global_lore, dialogue_script=None, continuity_state
             response = get_llm_response(
                 prompt,
                 model=config.get("director.model", "deepseek-ai/DeepSeek-V3.2"),
+                task_type="storyboard",
                 temperature=config.get("director.temperature", 0.4),
                 max_tokens=2000
             )
@@ -137,92 +197,281 @@ def run_director(screenplay, global_lore, dialogue_script=None, continuity_state
             enable_ai_generation = False
     
     if not enable_ai_generation:
-        # 规则生成分镜，作为fallback
+        # V8: 电影级智能分镜生成（集成情绪分析+导演风格+平台优化）
+        director_style = config.get("director.default_style", "nolan")
+        story_type = global_lore.get("genre", "rags_to_riches")
+        
+        # ====== V8: 平台优化配置读取 ======
+        target_platform = config.get("basic.target_platform", "universal")
+        content_strategy_key = config.get("basic.content_strategy", "romance_domination_strategy")
+        
+        platform_spec = PLATFORM_SPECS.get(target_platform, {})
+        content_strategy = CONTENT_STRATEGIES.get(content_strategy_key, {})
+        use_platform_rules = bool(platform_spec) and bool(content_strategy)
+        
+        if use_platform_rules:
+            print(f"[Director V8] 🌍 平台优化已启用:")
+            print(f"   平台: {platform_spec.get('name', target_platform)}")
+            print(f"   策略: {content_strategy.get('name', content_strategy_key)}")
+            print(f"   节奏要求: 每{platform_spec.get('rhythm_profile', {}).get('beat_drop', 5)}秒一个节拍变化")
+        
+        print(f"[Director V8] 使用导演风格: {director_style} | 故事类型: {story_type}")
+        
         for shot_num in range(1, len(beats)+2):
             shot_id = f"ep{seq}_shot{str(shot_num).zfill(2)}"
             beat_idx = (shot_num - 1) % len(beats)
-            beat_content = beats[beat_idx]['content']
+            beat = beats[beat_idx]
+            beat_content = beat['content']
+            beat_type = beat.get('beat_type', 'setup')
+            
             shot_dialogue = dialogue_map.get(shot_id, {})
             dialogue_content = shot_dialogue.get('content', '')
             speaker = shot_dialogue.get('speaker', main_char_name)
-
-            # 智能匹配专业参数，根据剧情内容自动分配
-            beat_lower = beat_content.lower()
-            # 匹配焦段
-            if any(keyword in beat_lower for keyword in ["绝望", "宏大", "末日", "巨型", "全景"]):
-                lens = LENS_RULES["desperate/grand"]
-            elif any(keyword in beat_lower for keyword in ["对话", "特写", "表情", "说话", "脸"]):
-                lens = LENS_RULES["dialogue/closeup"]
-            else:
-                lens = LENS_RULES["action"]
+            dialogue_emotion = shot_dialogue.get('emotion', '')
             
-            # 匹配灯光
-            if any(keyword in beat_lower for keyword in ["反派", "阴险", "坏", "敌人", "恐怖"]):
-                lighting = LIGHTING_RULES["villain/insidious"]
-            elif any(keyword in beat_lower for keyword in ["升级", "异能", "发光", "神圣", "高能"]):
-                lighting = LIGHTING_RULES["holy/high_energy"]
-            elif any(keyword in beat_lower for keyword in ["紧张", "冲突", "打斗", "战斗"]):
-                lighting = LIGHTING_RULES["tense/dramatic"]
-            else:
-                lighting = LIGHTING_RULES["calm/romantic"]
+            # ====== 核心升级：使用情绪分析系统 ======
+            scene_analysis = analyze_scene_emotion(beat_content)
+            primary_emotion = scene_analysis["primary_emotion"]
+            emotion_intensity = scene_analysis["intensity"]
             
-            # 匹配运镜
-            if any(keyword in beat_lower for keyword in ["不安", "诡异", "奇怪", "不对劲"]):
-                camera_movement = CAMERA_MOVEMENT_RULES["unease/anxiety"]
-            elif any(keyword in beat_lower for keyword in ["震惊", "突然", "爆炸", "出现"]):
-                camera_movement = CAMERA_MOVEMENT_RULES["shock/surprise"]
-            elif any(keyword in beat_lower for keyword in ["紧张", "追逐", "逃跑", "打斗"]):
-                camera_movement = CAMERA_MOVEMENT_RULES["tension/chase"]
-            elif any(keyword in beat_lower for keyword in [" reveal", "出现", "宏大", "全景"]):
-                camera_movement = CAMERA_MOVEMENT_RULES["epic/reveal"]
-            else:
-                camera_movement = CAMERA_MOVEMENT_RULES["dialogue"]
+            # 如果台词有明确情绪，优先使用
+            if dialogue_emotion and dialogue_emotion in BASIC_EMOTIONS:
+                primary_emotion = dialogue_emotion
+                emotion_intensity = min(1.0, emotion_intensity + 0.2)
             
-            # 定位
-            current_location = "outdoor" if "室外" in beat_content or "天台" in beat_content or "外面" in beat_content or "野外" in beat_content else "indoor"
+            # 根据剧情位置调整强度（弧线中段更强）
+            arc_position = seq / max(global_lore.get('recommended_episode_count', 98), 1)
+            if 0.4 <= arc_position <= 0.8:  # 故事中段
+                emotion_intensity = min(1.0, emotion_intensity * 1.2)
             
-            # 生成专业级视觉提示词，零笼统词汇
-            visual_prompt = f"(Masterpiece:1.2), (ultra-detailed:1.2), 9:16 vertical composition, {main_char_name}, {main_char_traits}, {beat_content[:100]}, {lens}, {lighting}, shot on ARRI Alexa Mini"
-            
-            # 专业级视频提示词，强制加入运镜术语
-            motion_intensity = motion_intensities[(seq + shot_num) % len(motion_intensities)]
-            physics_effect = physics_effects[(seq + shot_num) % len(physics_effects)]
-            video_prompt = f"{visual_prompt}, {camera_movement}, motion_intensity: {motion_intensity}, {physics_effect} --ar 9:16"
-            visual_prompt += " --ar 9:16"
-
-            # 具象化音效
-            sfx_map = {
-                "打斗": "fist punching sound, body impact",
-                "爆炸": "explosion sound, debris flying",
-                "下雨": "rain sound, thunder",
-                "对话": "clear dialogue, slight room reverb",
-                "跑步": "footsteps running, heavy breathing"
-            }
-            specific_sfx = "ambient sound"
-            for keyword, sfx in sfx_map.items():
-                if keyword in beat_content:
-                    specific_sfx = sfx
+            # ====== 场景类型智能识别 ======
+            scene_type_detected = "interior_domestic"
+            for scene_type_key, rules in SCENE_TYPE_RULES.items():
+                indicators = rules.get("indicators", [])
+                if any(indicator in beat_content for indicator in indicators):
+                    scene_type_detected = scene_type_key
                     break
+            
+            # ====== 调用电影级镜头语言系统 ======
+            cinematic_config = get_cinematic_shot(
+                emotion=primary_emotion,
+                scene_type=scene_type_detected,
+                director_style=director_style,
+                intensity=int(round(emotion_intensity * 10))
+            )
+            
+            # 从配置中提取参数
+            shot_type = cinematic_config.get("shot_type", "medium_shot")
+            camera_movement_raw = cinematic_config.get("camera_movement", "static")
+            camera_angle = camera_movement_raw.split()[0] if camera_movement_raw else "eye_level"
+            lighting_setup = cinematic_config.get("lighting_setup", "natural")
+            lens_info = cinematic_config.get("lens", "50mm standard lens")
+            
+            # ====== V8: 平台视觉语言覆盖 ======
+            platform_visual_overrides = {}
+            if use_platform_rules and 'visual_language' in content_strategy:
+                vis_lang = content_strategy['visual_language']
+                
+                # 覆盖光影方案（使用策略指定的风格）
+                if 'lighting' in vis_lang:
+                    platform_visual_overrides['lighting'] = vis_lang['lighting']
+                    # 将策略描述转换为具体灯光值
+                    if 'golden' in vis_lang['lighting'].lower() or 'warm' in vis_lang['lighting'].lower():
+                        lighting_setup = "warm golden hour, soft key light, low contrast"
+                    elif 'dramatic' in vis_lang['lighting'].lower() or 'contrast' in vis_lang['lighting'].lower():
+                        lighting_setup = "hard key light, high contrast, dramatic shadows"
+                    elif 'ethereal' in vis_lang['lighting'].lower() or 'glow' in vis_lang['lighting'].lower():
+                        lighting_setup = "ethereal glow, volumetric light, rim lighting"
+                
+                # 覆盖色彩分级
+                if 'color_grading' in vis_lang:
+                    platform_visual_overrides['color_grading'] = vis_lang['color_grading']
+                
+                # 覆盖运镜偏好
+                if 'camera_work' in vis_lang:
+                    platform_visual_overrides['camera_work'] = vis_lang['camera_work']
+                    # 根据策略调整镜头类型
+                    if 'close-up' in vis_lang['camera_work'].lower() and beat_type in ['hook', 'climax']:
+                        shot_type = "extreme_close_up"
+                    elif 'wide' in vis_lang['camera_work'].lower() and beat_type == 'cliffhanger':
+                        shot_type = "long_shot"
+            
+            # V8: 计算平台特定指标
+            platform_metrics = {}
+            if use_platform_rules:
+                # Hook强度评估（第一个镜头或hook类型节拍得分更高）
+                is_hook_shot = (shot_num == 1) or (beat_type == 'hook')
+                hook_strength = 9 if is_hook_shot else max(3, 10 - shot_num)
+                
+                # 分享性评估（情绪强烈+视觉冲击=高分享性）
+                shareability = min(10, int(emotion_intensity * 8) + (5 if beat_type in ['climax', 'cliffhanger'] else 2))
+                
+                # 评论诱导元素
+                comment_inducers = []
+                if beat_type == 'cliffhanger':
+                    comment_inducers.append("悬念结尾-猜测剧情走向")
+                if primary_emotion in ['love', 'anger', 'sadness']:
+                    comment_inducers.append(f"强{primary_emotion}情绪共鸣")
+                if 'twist' in beat_content.lower() or 'shock' in beat_content.lower():
+                    comment_inducers.append("意外反转")
+                
+                # TikTok文字叠加建议
+                text_overlay_suggestion = None
+                if target_platform == "tiktok" and beat_type in ['setup', 'escalation']:
+                    if len(beat_content) > 20:
+                        text_overlay_suggestion = beat_content[:40] + "..."
+                
+                platform_metrics = {
+                    "hook_strength": hook_strength,
+                    "shareability_factor": shareability,
+                    "comment_inducers": comment_inducers,
+                    "text_overlay_suggestion": text_overlay_suggestion,
+                    "beat_position_for_retention": f"{shot_num}/{len(beats)+1}"
+                }
+            
+            current_location = "outdoor" if any(kw in beat_content for kw in ["室外", "天台", "外面", "野外", "街道"]) else "indoor"
+            
+            # ====== 生成专业级提示词（使用新系统）=====
+            visual_prompt = generate_cinematic_prompt(
+                cinematic_config,
+                scene_description=f"{current_location} - {beat_content[:100]}",
+                character_action=f"{speaker}: {dialogue_content[:50] if dialogue_content else 'observing'}"
+            )
+            
+            # 视频提示词（保留原有逻辑但增强）
+            motion_intensity = motion_intensities[min(int(emotion_intensity * 10), len(motion_intensities)-1)]
+            motion_type = motion_types[(seq + shot_num) % len(motion_types)]
+            physics_effect = physics_effects[(seq + shot_num) % len(physics_effects)]
+            
+            video_prompt = generate_video_prompt(
+                visual_prompt=visual_prompt,
+                camera_movement=camera_movement_raw,
+                motion_intensity=motion_intensity,
+                motion_type=motion_type,
+                physics_effect=physics_effect,
+                montage_type=montage_type
+            )
 
-            audio_prompt = {
-                "Ambience": "post apocalyptic wind howling, distant roaring" if "outdoor" in current_location else "indoor ambient hum, faint distant rumble",
-                "SFX": specific_sfx,
-                "Music": "BPM 120, tense dark ambient score",
-                "Dialogue": dialogue_content
-            }
+            # ====== 音频设计（使用专业系统 + 平台优化）=====
+            from components.agents.Foley_Sound_Designer_Agent.professional_audio_system import get_audio_design, generate_audio_prompt as gen_pro_audio_prompt
+            
+            audio_design = get_audio_design(
+                emotion=primary_emotion,
+                scene_type=scene_type_detected,
+                intensity=int(round(emotion_intensity * 10))
+            )
+            
+            # V8: 平台音频策略覆盖
+            if use_platform_rules and 'audio_language' in content_strategy:
+                aud_lang = content_strategy['audio_language']
+                audio_req = platform_spec.get('audio_requirements', {})
+                
+                # 覆盖音乐风格
+                if 'music' in aud_lang:
+                    audio_design['music'] = {
+                        **audio_design.get('music', {}),
+                        "platform_style": aud_lang['music'],
+                        "trend_awareness": audio_req.get('music_trend_awareness', 'moderate')
+                    }
+                
+                # 覆盖环境音
+                if 'ambience' in aud_lang:
+                    audio_design['ambience'] = aud_lang['ambience']
+                
+                # 调整音量平衡（TikTok要求音乐略大于人声）
+                if target_platform == "tiktok":
+                    audio_design['mix_balance'] = "music_60_voice_40"
+                elif target_platform == "facebook_reels":
+                    audio_design['mix_balance'] = "balanced"
+            
+            audio_prompt = gen_pro_audio_prompt(
+                audio_design,
+                scene_description=f"{current_location} - {beat_content[:80]}",
+                character_dialogue=dialogue_content
+            )
 
-            storyboard.append({
+            # 构建增强的storyboard条目（包含完整元数据）
+            storyboard_entry = {
                 "shot_id": shot_id,
-                "shot_type": shot_types[(seq + shot_num) % len(shot_types)],
-                "camera_angle": camera_angles[(seq + shot_num) % len(camera_angles)],
-                "lighting_setup": lighting,
+                "shot_type": shot_type,
+                "camera_angle": camera_angle,
+                "lighting_setup": lighting_setup,
                 "transition_effect": transitions[(seq + shot_num) % len(transitions)],
                 "location": current_location,
                 "visual_prompt": visual_prompt,
                 "video_prompt": video_prompt,
                 "audio_prompt": audio_prompt,
-                "render_refs": {"face_id": face_id_ref}
-            })
+                "render_refs": {"face_id": face_id_ref},
+                
+                # V7 新增：完整的台词信息
+                "dialogue": {
+                    "speaker": speaker,
+                    "content": dialogue_content,
+                    "emotion": primary_emotion,
+                    "delivery": shot_dialogue.get('delivery', '正常语速'),
+                    "subtext": shot_dialogue.get('subtext', ''),
+                    "duration": shot_dialogue.get('duration', 2.5)
+                },
+                
+                # V7 新增：电影级元数据
+                "cinematic_metadata": {
+                    "director_style": director_style,
+                    "primary_emotion": primary_emotion,
+                    "emotion_intensity": emotion_intensity,
+                    "emotion_vector": calculate_complex_emotion(primary_emotion),
+                    "scene_type": scene_type_detected,
+                    "lens_config": lens_info,
+                    "color_grading": platform_visual_overrides.get('color_grading', cinematic_config.get("color_grading", "")),
+                    "movement_curve": cinematic_config.get("movement_curve", "")
+                },
+                
+                # V7 新增：剧情位置信息
+                "narrative_context": {
+                    "episode_position": seq,
+                    "total_episodes": global_lore.get('recommended_episode_count', 98),
+                    "beat_type": beat_type,
+                    "beat_index": beat_idx + 1,
+                    "total_beats": len(beats),
+                    "is_climax_beat": beat_type in ["climax", "escalation"]
+                },
+                
+                # V8 新增：平台优化元数据
+                "platform_optimization": {
+                    "target_platform": target_platform if use_platform_rules else "universal",
+                    "hook_strength": platform_metrics.get("hook_strength", 0),
+                    "shareability_factor": platform_metrics.get("shareability_factor", 0),
+                    "comment_inducers": platform_metrics.get("comment_inducers", []),
+                    "text_overlay_suggestion": platform_metrics.get("text_overlay_suggestion"),
+                    "visual_language_applied": platform_visual_overrides
+                } if use_platform_rules else None
+            }
+            
+            storyboard.append(storyboard_entry)
+        
+        # ====== V8: 多模态一致性检查 ======
+        print(f"[Director V8] 执行多模态一致性检查...")
+        
+        consistency_report = check_multimodal_consistency(
+            visual_config={
+                "director_style": director_style,
+                "color_temperature": lighting_setup,
+                "lighting_setup": lighting_setup,
+                "camera_movement": camera_angle
+            },
+            audio_config=audio_design if 'audio_design' in locals() else {},
+            text_analysis={
+                "primary_emotion": primary_emotion if 'primary_emotion' in dir() else "neutral",
+                "intensity": emotion_intensity if 'emotion_intensity' in dir() else 0.5
+            }
+        )
+        
+        if consistency_report["overall_score"] < 0.7:
+            print(f"[Director V8] ⚠️ 一致性得分较低: {consistency_report['overall_score']:.2f}")
+            suggestions = generate_consistency_fix_suggestions(consistency_report)
+            for suggestion in suggestions[:3]:  # 只显示前3个建议
+                print(f"   💡 {suggestion['suggestion']}")
+        else:
+            print(f"[Director V8] ✅ 多模态一致性检查通过 (得分: {consistency_report['overall_score']:.2f})")
     
     storyboard_result = {
         "episode_seq": seq,

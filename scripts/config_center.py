@@ -8,7 +8,11 @@ import yaml
 from typing import Dict, Any
 
 class ConfigCenter:
-    def __init__(self, config_path: str = "config.yaml"):
+    def __init__(self, config_path: str = None):
+        # 如果没有指定路径，从脚本所在目录查找
+        if config_path is None:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            config_path = os.path.join(script_dir, "..", "config.yaml")
         self.config_path = config_path
         self.config = self._load_config()
     
@@ -63,7 +67,7 @@ class ConfigCenter:
             # 语义分析配置
             "semantic_analysis": {
                 "cache_enabled": True, # 是否开启缓存，同一本小说不用重复分析
-                "chunk_size_char": 20000, # 单分析块字符数（1万汉字约2万字符）
+                "chunk_size_char": 10000, # 单分析块字符数（降低到5000汉字，减少单次调用风险）
                 "overlap_ratio": 0.05, # 块重叠比例
                 "max_retries": 2, # 分析失败最大重试次数
                 "model": "deepseek-ai/DeepSeek-V3.2", # 分析用模型
@@ -198,6 +202,15 @@ class ConfigCenter:
                 value = value[k]
             return value
         except (KeyError, TypeError):
+            # 支持扁平配置结构 (llm.provider.api_key)
+            if len(keys) >= 3 and keys[0] == "llm":
+                provider = keys[1]
+                field = keys[2]  # api_key, base_url, model等
+                # 从扁平结构读取: llm.siliconflow.api_key
+                llm_config = self.config.get("llm", {})
+                provider_config = llm_config.get(provider, {})
+                if isinstance(provider_config, dict) and field in provider_config:
+                    return provider_config[field]
             return default
     
     def set(self, key_path: str, value: Any):

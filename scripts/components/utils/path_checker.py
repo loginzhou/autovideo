@@ -18,9 +18,13 @@ def check_write_permission(paths: list) -> bool:
     return True
 
 # 全局必填路径配置
+import os
+
+# 使用相对路径，相对于项目根目录
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 REQUIRED_PATHS = [
-    "C:\\Users\\tion\\.openclaw\\workspace\\novel2shorts\\sandbox",
-    "C:\\Users\\tion\\.openclaw\\workspace\\novel2shorts\\output",
-    "C:\\Users\\tion\\.openclaw\\workspace\\novel2shorts\\logs",
-    "C:\\Users\\tion\\.openclaw\\workspace\\novel2shorts\\assets"
+    os.path.join(PROJECT_ROOT, "sandbox"),
+    os.path.join(PROJECT_ROOT, "output"),
+    os.path.join(PROJECT_ROOT, "logs"),
+    os.path.join(PROJECT_ROOT, "assets")
 ]

@@ -59,6 +59,13 @@ class ConfigLoader:
         if not provider:
             provider = cls.get('llm.default_provider')
         return cls.get(f'llm.providers.{provider}', {})
+    
+    @classmethod
+    def get_all_config(cls) -> Dict:
+        """获取整个配置对象"""
+        if not cls._config:
+            cls()
+        return cls._config
 
 # 全局单例
 config = ConfigLoader()

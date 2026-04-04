@@ -6,16 +6,18 @@ import hashlib
 from config_center import config
 from components.utils.llm_client import get_llm_response
 from components.utils.state_manager import pipeline_state
+from components.skills.novel_sliding_window_chunker import novel_sliding_window_chunker
 
 def run_novel_semantic_analyzer(novel_path):
     """
-    全量小说语义深度分析引擎 V2.0 优化版（基于Gemini高效处理逻辑）
+    全量小说语义深度分析引擎 V2.1 - 智能切块优化版
     采用"全局设定+滚动总结+当前分块"策略，避免上下文溢出和超时
+    复用小说切块器，保证章节边界和语义连贯性
     新增缓存机制、结果校验、自动重试，提升准确率和稳定性
     """
     print("="*60)
-    print("全量小说语义分析引擎启动（优化版）")
-    print("采用滚动摘要+1万字分块策略，避免超时和中间遗忘效应")
+    print("全量小说语义分析引擎启动（智能切块优化版）")
+    print("采用章节感知切块 + 滚动摘要策略，避免超时和中间遗忘效应")
     print("="*60)
     
     # 先检查缓存：同一本小说不需要重复分析
@@ -36,24 +38,47 @@ def run_novel_semantic_analyzer(novel_path):
                 cached_result = json.load(f)
             return cached_result
     
-    # 1. 读取完整小说
+    # 1. 读取完整小说并计算哈希
     with open(novel_path, 'r', encoding='utf-8') as f:
         full_content = f.read()
     
     total_length = len(full_content)
     print(f"读取小说完成，总字数：{total_length//2} 字")
     
-    # 2. 分块处理，参数从配置中心读取
-    chunk_size_char = config.get("semantic_analysis.chunk_size_char", 20000)  # 1万汉字约2万字符
+    # 2. 分块处理，优先复用小说切块逻辑，保证章节边界和语义连贯性
+    chunk_size_char = config.get("semantic_analysis.chunk_size_char", 10000)  # 1万汉字约2万字符
     overlap_ratio = config.get("semantic_analysis.overlap_ratio", 0.05)
-    overlap = int(chunk_size_char * overlap_ratio)
     max_retries = config.get("semantic_analysis.max_retries", 2)
     
-    chunks = []
-    for i in range(0, total_length, chunk_size_char - overlap):
-        chunk = full_content[i:i+chunk_size_char]
-        chunks.append(chunk)
-    print(f"小说分块完成，共 {len(chunks)} 个分析块（单块最大{chunk_size_char//2}汉字，最优token区间）")
+    # 将字符数转换为KB（假设1汉字=2字节）
+    semantic_chunk_size_kb = max(10, int(chunk_size_char * 2 / 1024))
+    
+    print(f"\n>>> 开始智能切块（复用小说切块器）...")
+    print(f"    目标块大小：{chunk_size_char} 字符（约{semantic_chunk_size_kb}KB）")
+    print(f"    重叠率：{overlap_ratio*100}%")
+    
+    semantic_chunks = novel_sliding_window_chunker(
+        novel_path, 
+        chunk_size_kb=semantic_chunk_size_kb, 
+        overlap_ratio=overlap_ratio
+    )
+    
+    if semantic_chunks:
+        chunks = [chunk_obj["content"] for chunk_obj in semantic_chunks]
+        # 打印切块统计信息
+        chapter_chunks = sum(1 for c in semantic_chunks if c.get("contains_chapter", False))
+        print(f"\n>>> 切块完成统计：")
+        print(f"    总块数：{len(chunks)}")
+        print(f"    包含章节边界的块：{chapter_chunks}")
+        print(f"    平均每块字数：{sum(len(c) for c in chunks)//len(chunks)//2}")
+    else:
+        # 退回到简单文本切分，避免空块失败
+        print(f"\n⚠️  警告：智能切块失败，退回到简单文本切分")
+        overlap = int(chunk_size_char * overlap_ratio)
+        chunks = [full_content[i:i+chunk_size_char] for i in range(0, total_length, chunk_size_char - overlap)]
+        print(f"    简单切分共 {len(chunks)} 个块")
+    
+    print(f"\n>>> 开始语义分析...")
     
     # 3. Prompt模板
     analyze_prompt = """
@@ -71,7 +96,11 @@ def run_novel_semantic_analyzer(novel_path):
     temperature = config.get("semantic_analysis.temperature", 0.1)
     
     for idx, chunk in enumerate(chunks):
-        print(f"正在分析第 {idx+1}/{len(chunks)} 块...")
+        chunk_start_time = time.time()
+        print(f"\n正在分析第 {idx+1}/{len(chunks)} 块...")
+        print(f"    块大小：{len(chunk)//2} 字")
+        print(f"    开始时间：{time.strftime('%H:%M:%S', time.localtime(chunk_start_time))}")
+        
         # 构造当前prompt，带上前情提要
         prompt = analyze_prompt.replace("{{prev_summary}}", prev_summary).replace("{{chunk_content}}", chunk)
         
@@ -80,31 +109,56 @@ def run_novel_semantic_analyzer(novel_path):
         for retry in range(max_retries + 1):
             try:
                 # 调用LLM，max_tokens设为4000，确保输出完整
-                response = get_llm_response(prompt, model=model, temperature=temperature, max_tokens=4000)
+                print(f"    调用LLM，模型：{model}，温度：{temperature}")
+                response = get_llm_response(
+                    prompt, 
+                    model=model, 
+                    temperature=temperature, 
+                    max_tokens=4000, 
+                    response_format="json",
+                    task_type="semantic_analysis"
+                )
+                print(f"    LLM调用成功，响应长度：{len(response)} 字符")
+                
                 # 尝试解析JSON
                 chunk_result = json.loads(response)
+                
                 # 校验必要字段是否存在
                 required_fields = ["genre", "summary", "characters", "story_rules"]
                 for field in required_fields:
                     if field not in chunk_result:
                         raise ValueError(f"缺少必要字段：{field}")
+                
+                print(f"    ✓ 第{idx+1}块分析成功")
                 break
+                
             except Exception as e:
                 if retry < max_retries:
-                    print(f"第{idx+1}块分析失败，第{retry+1}次重试：{str(e)}")
+                    print(f"    ✗ 第{idx+1}块分析失败，第{retry+1}次重试：{str(e)}")
                     time.sleep(1)
                 else:
-                    print(f"第{idx+1}块分析失败，已重试{max_retries}次，跳过本块")
+                    print(f"    ✗ 第{idx+1}块分析失败，已重试{max_retries}次，跳过本块：{str(e)}")
                     continue
         
         if chunk_result:
             all_results.append(chunk_result)
             # 更新滚动摘要，供下一块使用
             prev_summary = chunk_result.get("summary", "无摘要")
-            print(f"第{idx+1}块分析完成，摘要：{prev_summary[:50]}...")
+            print(f"    摘要：{prev_summary[:50]}...")
+        
+        # 显示进度和预估时间
+        elapsed = time.time() - chunk_start_time
+        progress = (idx + 1) / len(chunks) * 100
+        remaining_chunks = len(chunks) - (idx + 1)
+        if remaining_chunks > 0:
+            estimated_remaining = elapsed * remaining_chunks
+            print(f"    进度：{progress:.1f}% | 预估剩余时间：{estimated_remaining//60:.0f}分{estimated_remaining%60:.0f}秒")
     
     # 5. 合并所有分块结果，智能去重整合（避免重复内容）
+    print("\n" + "="*60)
     print("正在整合全量分析结果...")
+    print("="*60)
+    
     if not all_results:
         # 所有块都失败，直接抛出异常，禁止fallback
         raise Exception("所有小说分析块调用API失败，无有效分析结果，请检查API配置后重试")
@@ -159,9 +213,14 @@ def run_novel_semantic_analyzer(novel_path):
             if char_name not in char_map:
                 char_map[char_name] = char
             else:
-                # 合并信息
+                # 合并信息 - 添加类型检查防止转换错误
                 existing = char_map[char_name]
-                existing['visual_traits'] = list(set(existing.get('visual_traits', []) + char.get('visual_traits', [])))
+                # 安全地合并visual_traits，只处理列表类型的元素
+                existing_traits = existing.get('visual_traits', [])
+                new_traits = char.get('visual_traits', [])
+                if isinstance(existing_traits, list) and isinstance(new_traits, list):
+                    merged_traits = [t for t in existing_traits + new_traits if isinstance(t, str)]
+                    existing['visual_traits'] = list(dict.fromkeys(merged_traits))  # 保持顺序去重
                 if not existing.get('character_arc', ''):
                     existing['character_arc'] = char.get('character_arc', '')
                 if not existing.get('voice_type', ''):
@@ -173,16 +232,22 @@ def run_novel_semantic_analyzer(novel_path):
     if ep_counts:
         final_result['recommended_episode_count'] = int(sum(ep_counts) / len(ep_counts))
     
+    print(f"\n>>> 整合完成：")
+    print(f"    成功分析块数：{len(all_results)}/{len(chunks)}")
+    print(f"    识别角色数：{len(final_result['characters'])}")
+    print(f"    识别转折点：{len(final_result['key_turning_points'])}")
+    print(f"    推荐集数：{final_result['recommended_episode_count']}")
+    
     # 保存缓存
     if cache_enabled:
         with open(cache_path, 'w', encoding='utf-8') as f:
             json.dump(final_result, f, ensure_ascii=False, indent=2)
-        print(f"语义分析结果已缓存到：{cache_path}")
+        print(f"\n>>> 语义分析结果已缓存到：{cache_path}")
     
     # 人工审核语义分析结果
     from components.utils.human_review_manager import human_review
     if human_review.request_review("semantic_analysis", final_result):
-        print("语义分析结果审核通过")
+        print("\n✓ 语义分析结果审核通过")
         return final_result
     else:
         # 审核被驳回，从状态中删除，下次重新分析
