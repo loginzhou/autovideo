@@ -1291,8 +1291,14 @@
                     return;
                 }
                 
+                if (vm.running) {
+                    ElMessage.warning('任务正在运行中，请先停止或等待完成！');
+                    return;
+                }
+                
                 vm.loading.task = true;
                 vm.running = true;
+                vm._detailPollingActive = false;
                 vm.logs = [];
                 
                 // 初始化工作流程状态
@@ -1337,10 +1343,15 @@
             
             // 轮询详细进度
             startDetailedProgressPolling(vm) {
+                if (vm._detailPollingActive) return;
+                vm._detailPollingActive = true;
                 const pollInterval = 2000; // 每2秒轮询一次
                 
                 const poll = () => {
-                    if (!vm.running) return;
+                    if (!vm.running) {
+                        vm._detailPollingActive = false;
+                        return;
+                    }
                     
                     setTimeout(() => {
                         axios.get('/api/get_detailed_progress')
@@ -1365,8 +1376,10 @@
                                     // 检查是否完成
                                     if (data.completed) {
                                         vm.running = false;
+                                        vm._detailPollingActive = false;
                                         vm.taskProgress.status = '已完成';
                                         ElMessage.success('视频包生成完成！');
+                                        DataManager.loadEpisodes(vm);
                                         return;
                                     }
                                 }
@@ -1428,6 +1441,7 @@
                     .then(() => {
                         vm.running = false;
                         vm.isPaused = false;
+                        vm._detailPollingActive = false;
                         vm.taskProgress.status = '已停止';
                         Utils.handleSuccess('任务已停止');
                     })
@@ -1796,6 +1810,7 @@
                     currentWorkflowStep: 0,
                     detailedProgress: [],
                     estimatedTime: 0,
+                    _detailPollingActive: false,  // 详细进度轮询是否已启动
                     hasNovelUploaded: false,
                     // 模板系统
                     templates: [
@@ -1964,6 +1979,11 @@
                 ConfigManager.loadTaskConfigs(this);
                 DataManager.loadEpisodes(this);
                 DataManager.loadAssets(this);
+                
+                // 立即同步后端任务状态（防止刷新后丢失运行状态）
+                this.syncBackendTaskState();
+                
+                // 启动日志轮询
                 this.pollLogs();
             },
             beforeUnmount() {
@@ -1987,6 +2007,56 @@
                 pauseTask() { TaskManager.pauseTask(this); },
                 resumeTask() { TaskManager.resumeTask(this); },
                 stopTask() { TaskManager.stopTask(this); },
+                
+                // 同步后端任务状态（页面刷新/加载时调用）
+                syncBackendTaskState() {
+                    console.log('Syncing backend task state...');
+                    Promise.all([
+                        axios.get('/api/get_logs'),
+                        axios.get('/api/get_detailed_progress')
+                    ]).then(([logsRes, progressRes]) => {
+                        const logsData = logsRes.data;
+                        const progData = progressRes.data;
+                        
+                        if (logsData.running) {
+                            console.log('Backend reports task is RUNNING, restoring state');
+                            this.running = true;
+                            this.isPaused = logsData.is_paused || false;
+                            
+                            if (progData.status === 'success' && progData.data) {
+                                const data = progData.data;
+                                this.currentWorkflowStep = data.current_step || 0;
+                                this.detailedProgress = data.detailed_progress || [];
+                                this.estimatedTime = data.estimated_time || 0;
+                                if (data.overall_progress) {
+                                    this.taskProgress = Object.assign({}, this.taskProgress, data.overall_progress);
+                                }
+                            }
+                            
+                            if (!this._detailPollingActive) {
+                                TaskManager.startDetailedProgressPolling(this);
+                            }
+                        } else if (progData.status === 'success' && progData.data && progData.data.completed) {
+                            console.log('Backend reports task COMPLETED, restoring final state');
+                            this.running = false;
+                            this.isPaused = false;
+                            const data = progData.data;
+                            this.currentWorkflowStep = data.current_step || 8;
+                            this.detailedProgress = data.detailed_progress || [];
+                            this.estimatedTime = 0;
+                            if (data.overall_progress) {
+                                this.taskProgress = Object.assign({}, this.taskProgress, data.overall_progress);
+                                this.taskProgress.status = '已完成';
+                            }
+                        } else {
+                            console.log('Backend reports no running task');
+                            this.running = false;
+                            this.isPaused = false;
+                        }
+                    }).catch(err => {
+                        console.warn('Failed to sync backend state:', err);
+                    });
+                },
                 
                 // 数据管理
                 loadEpisodes() { DataManager.loadEpisodes(this); },
@@ -2091,6 +2161,11 @@
                                     this.logs = res.data.logs;
                                     this.running = res.data.running;
                                     this.isPaused = res.data.is_paused;
+                                    
+                                    // 检测到后端正在运行但详细进度轮询未启动时，自动启动
+                                    if (res.data.running && !this._detailPollingActive) {
+                                        TaskManager.startDetailedProgressPolling(this);
+                                    }
                                     
                                     // 解析进度信息
                                     const progress = parseProgressFromLogs(res.data.logs);

@@ -824,6 +824,9 @@ async def start_full_workflow(request: Request):
         template_id = data.get("template_id")
         episodes_count = data.get("config")
         
+        if task_running:
+            return {"status": "error", "message": "任务正在运行中，请先停止当前任务"}
+        
         print(f"[WebUI] 启动完整工作流，模板: {template_id}, 集数: {episodes_count}")
         
         # 初始化工作流状态
